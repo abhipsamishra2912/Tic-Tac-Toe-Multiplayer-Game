@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hairband · Biometric Login</title>
+
+  <!-- Google Fonts: Cormorant Garamond (display) + DM Sans (body) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+
+</head>
+<body>
+
+  <!-- ── Decorative background blobs ─────────────────────────────────── -->
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+
+  <!-- ── Main card ────────────────────────────────────────────────────── -->
+  <main class="card" role="main">
+
+    <!-- Header -->
+    <header class="card__header">
+      <div class="logo">
+        <span class="logo__icon">◈</span>
+        <span class="logo__text">Hairband</span>
+      </div>
+      <h1 class="card__title">Biometric<br /><em>Sign In</em></h1>
+      <p class="card__subtitle">Look into the camera to verify your identity</p>
+    </header>
+
+    <!-- Camera preview -->
+    <section class="camera" aria-label="Webcam preview">
+      <div class="camera__frame" id="cameraFrame">
+
+        <!-- Idle state: camera off -->
+        <div class="camera__idle" id="cameraIdle">
+          <div class="camera__idle-icon">⊙</div>
+          <p>Camera is off</p>
+        </div>
+
+        <!-- Live video feed -->
+        <video id="videoFeed" autoplay playsinline muted aria-label="Live webcam"></video>
+
+        <!-- Scanning overlay (shown while processing) -->
+        <div class="camera__scan" id="cameraScan" hidden>
+          <div class="scan__line"></div>
+          <div class="scan__corners">
+            <span></span><span></span><span></span><span></span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Hidden canvas for frame capture (not visible to user) -->
+      <canvas id="captureCanvas" hidden></canvas>
+    </section>
+
+    <!-- Action buttons -->
+    <section class="actions">
+      <button class="btn btn--secondary" id="btnCamera" type="button">
+        <span class="btn__icon">◎</span>
+        <span>Start Camera</span>
+      </button>
+
+      <button class="btn btn--primary" id="btnLogin" type="button" disabled>
+        <span class="btn__icon">◈</span>
+        <span>Verify Identity</span>
+      </button>
+    </section>
+
+    <!-- Status / feedback strip -->
+    <div class="status" id="statusBox" role="status" aria-live="polite" hidden>
+      <span class="status__dot"></span>
+      <span class="status__msg" id="statusMsg"></span>
+    </div>
+
+  </main>
+
+</body>
+</html>
