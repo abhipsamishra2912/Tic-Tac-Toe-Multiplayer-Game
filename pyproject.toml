@@ -10,6 +10,12 @@ dependencies = [
     "numpy>=2.4.3",
     "pillow>=12.1.1",
     "setuptools<71.0",
+    "pymongo",
+    "mysql-connector-python",
+    "requests",
+    "python-dotenv",
+    "fastapi",
+    "uvicorn",
 ]
 
 [tool.uv.sources]
