@@ -1,5 +1,3 @@
-"""Phase 2 FastAPI app entry point."""
-
 from pathlib import Path
 
 import uvicorn
@@ -8,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
+from auth_router import router as auth_router
 from db import ensure_phase2_schema
 
 app = FastAPI(title="BiometricArena – Phase 2")
@@ -21,6 +20,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth_router, prefix="/auth")
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 
 
