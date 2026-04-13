@@ -1,66 +1,33 @@
-from dotenv import load_dotenv
-load_dotenv()
-
-import os
-import mysql.connector
+import sqlite3
 from pymongo import MongoClient
 
-MYSQL_HOST = os.getenv("MYSQL_HOST", "localhost")
-MYSQL_PORT = int(os.getenv("MYSQL_PORT", "3306"))
-MYSQL_USER = os.getenv("MYSQL_USER", "hairband_user")
-MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD", "hairband")
-MYSQL_DB = os.getenv("MYSQL_DB", "project_db")
+conn = sqlite3.connect("project_db", check_same_thread=False)
+cursor = conn.cursor()
 
-MONGO_URI = os.getenv(
-    "MONGO_URI",
-    "mongodb+srv://hairband:hairband_a_s_h@cluster0.4ldl2pp.mongodb.net/project_DB_mongo?retryWrites=true&w=majority",
-)
-MONGO_DB = os.getenv("MONGO_DB", "project_DB_mongo")
+def get_user(uid):
+    cursor.execute("SELECT * FROM users WHERE uid = ?", (uid,))
+    return cursor.fetchone()
 
-_mongo_client = None
+def user_exists(uid):
+    return get_user(uid) is not None
 
+def set_user_online(uid):
+    cursor.execute("UPDATE users SET is_online = TRUE WHERE uid = ?", (uid,))
+    conn.commit()
 
-def get_mysql_connection():
-    return mysql.connector.connect(
-        host=MYSQL_HOST,
-        port=MYSQL_PORT,
-        user=MYSQL_USER,
-        password=MYSQL_PASSWORD,
-        database=MYSQL_DB,
-        autocommit=True,
-    )
+#MONGODB
+MONGO_URI = "mongodb+srv://hairband:hairband_a_s_h@cluster0.4ldl2pp.mongodb.net/project_db_mongo?retryWrites=true&w=majority"
+client = MongoClient(MONGO_URI)
+db = client["project_DB_mongo"]
+collection = db["profile_images"]
 
+def get_images():
+    images = {}
+    for doc in collection.find():
+        images[doc["uid"]] = doc["image"]
+    return images
 
-def ensure_phase2_schema() -> None:
-    conn = get_mysql_connection()
-    cur = conn.cursor()
-    cur.execute(
-        """
-        CREATE TABLE IF NOT EXISTS users (
-            uid VARCHAR(64) PRIMARY KEY,
-            name VARCHAR(255) NOT NULL
-        )
-        """
-    )
-
-    cur.execute("SHOW COLUMNS FROM users LIKE 'elo_rating'")
-    if cur.fetchone() is None:
-        cur.execute("ALTER TABLE users ADD COLUMN elo_rating INT NOT NULL DEFAULT 1200")
-
-    cur.execute("SHOW COLUMNS FROM users LIKE 'is_online'")
-    if cur.fetchone() is None:
-        cur.execute("ALTER TABLE users ADD COLUMN is_online BOOLEAN NOT NULL DEFAULT FALSE")
-
-    conn.close()
-
-
-def get_mongo_client():
-    global _mongo_client
-    if _mongo_client is None:
-        _mongo_client = MongoClient(MONGO_URI)
-    return _mongo_client
-
-
-def get_mongo_collection():
-    db = get_mongo_client()[MONGO_DB]
-    return db["profile_images"]
+#retreieves all docs from mongodb collection
+#creates a dict of images
+#where each uid maps to corresp image data
+#doc["uid"] is the key and doc["image" is value]

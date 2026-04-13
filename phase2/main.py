@@ -1,43 +1,36 @@
-from pathlib import Path
+from fastapi import FastAPI, Request
+from auth import authenticate
+from db import set_user_online
+import base64
 
-import uvicorn
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
+app = FastAPI() 
+#initialization
 
-from auth_router import router as auth_router
-from db import ensure_phase2_schema
+sessions = {}
 
-app = FastAPI(title="BiometricArena – Phase 2")
-BASE_DIR = Path(__file__).resolve().parent
+@app.post("/login")
+async def login(request: Request):
+    data = await request.json()
+    image_data = data.get("image")
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+    if not image_data:
+        return {"status": "error", "message": "No image provided"}
+    
+    if "," in image_data:
+        image_data = image_data.split(",", 1)[1]
+    image_data = base64.b64decode(image_data)
 
-app.include_router(auth_router, prefix="/auth")
-app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
+    uid = authenticate(image_data)
 
+    if uid is None:
+        return {"status": "fail", "message": "Face not recognised"}
+    
+    sessions[uid] = True
 
-@app.on_event("startup")
-def startup():
-    ensure_phase2_schema()
+    set_user_online(uid)
 
-
-@app.get("/")
-async def serve_login():
-    return FileResponse(BASE_DIR / "static" / "login.html")
-
-
-@app.get("/dashboard")
-async def serve_dashboard():
-    return FileResponse(BASE_DIR / "static" / "dashboard.html")
-
-
-if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    return {
+        "status": "success",
+        "uid": uid,
+        "message": "Login successful"
+    }
