@@ -1,16 +1,22 @@
 from pymongo import MongoClient
-import mysql.connector
+import sqlite3
 import csv
 import requests
 
 
-mydb=mysql.connector.connect(
-    host="localhost",
-    user="hairband_user",
-    password="mypassword",
-    database="project_db"
-)
+mydb=sqlite3.connect('project_db')
 mycursor=mydb.cursor()
+
+mycursor.execute('''
+    CREATE TABLE IF NOT EXISTS users (
+        uid VARCHAR PRIMARY KEY,
+        name VARCHAR,
+        elo_rating INT DEFAULT 1200,
+        is_online BOOLEAN DEFAULT FALSE
+    )
+    ''')
+mydb.commit()
+
 MONGO_URI="mongodb+srv://hairband:hairband_a_s_h@cluster0.4ldl2pp.mongodb.net/project_db_mongo?retryWrites=true&w=majority" 
 client=MongoClient(MONGO_URI)
 db=client["project_DB_mongo"];
@@ -40,25 +46,29 @@ with open('batch_data.csv',mode='r')as file:
                     {"$set": {"image": image}},
                     upsert=True
                 )
-                sql="INSERT INTO users (uid,name) VALUES (%s,%s) ON DUPLICATE KEY UPDATE name = %s"
-                val=(uid,name,name)
-                mycursor.execute(sql,val)
+                sql="""INSERT INTO users (uid,name) VALUES (?,?) ON CONFLICT(uid) DO UPDATE SET name = excluded.name"""
+                mycursor.execute(sql,(uid,name))
                 mydb.commit()
                 print(f"uid:{uid} Successfully added")
                 suc+=1
             else:
                 print(f"uid:{uid}Image not found")
                 notfound+=1
+                
         except Exception as e:
-            if isinstance(e,requests.exceptions.Timeout):
-                print(f"uid:{uid} Error:Timeout")
-                timeout+=1
-            elif isinstance (e,requests.exceptions.ConnectionError):
-                print(f"uid:{uid} Error:Connection Error")
-                coner+=1
-            else:
-                print("Unknown Error") 
-                unkno+=1   
+            print(f"\nuid:{uid}")
+            print("TYPE:", type(e))
+            print("DETAILS:", repr(e))
+        # except Exception as e:
+        #     if isinstance(e,requests.exceptions.Timeout):
+        #         print(f"uid:{uid} Error:Timeout")
+        #         timeout+=1
+        #     elif isinstance (e,requests.exceptions.ConnectionError):
+        #         print(f"uid:{uid} Error:Connection Error")
+        #         coner+=1
+        #     else:
+        #         print("Unknown Error") 
+        #         unkno+=1   
 
 print("Inserted successfully!")
 print(f"No. of Successful entries:{suc}")
