@@ -23,7 +23,6 @@ function showStatus(msg, type = "loading") {
   else statusBox.classList.add("status--loading");
 }
 
-// ---------- START CAMERA ----------
 btnCamera.onclick = async () => {
   try {
     stream = await navigator.mediaDevices.getUserMedia({ video: true });
@@ -40,7 +39,6 @@ btnCamera.onclick = async () => {
   }
 };
 
-// ---------- LOGIN ----------
 btnLogin.onclick = async () => {
   if (!stream) return;
 
@@ -74,7 +72,6 @@ btnLogin.onclick = async () => {
     if (data.status === "success") {
       showStatus("Welcome! Logging you in...", "success");
 
-      // optional redirect
       setTimeout(() => {
         window.location.href = "/dashboard";
       }, 1000);
