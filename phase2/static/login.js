@@ -1,162 +1,90 @@
-'use strict';
+const video = document.getElementById("videoFeed");
+const canvas = document.getElementById("captureCanvas");
 
-const videoEl = document.getElementById('videoFeed');
-const canvasEl = document.getElementById('captureCanvas');
-const btnCamera = document.getElementById('btnCamera');
-const btnLogin = document.getElementById('btnLogin');
-const cameraIdle = document.getElementById('cameraIdle');
-const cameraScan = document.getElementById('cameraScan');
-const statusBox = document.getElementById('statusBox');
-const statusMsg = document.getElementById('statusMsg');
+const btnCamera = document.getElementById("btnCamera");
+const btnLogin = document.getElementById("btnLogin");
 
-let mediaStream = null;
-let cameraActive = false;
+const cameraIdle = document.getElementById("cameraIdle");
+const cameraScan = document.getElementById("cameraScan");
 
-function showStatus(msg, type = 'loading') {
+const statusBox = document.getElementById("statusBox");
+const statusMsg = document.getElementById("statusMsg");
+
+let stream = null;
+
+// ---------- STATUS ----------
+function showStatus(msg, type = "loading") {
   statusBox.hidden = false;
-  statusBox.className = `status status--${type}`;
   statusMsg.textContent = msg;
+
+  statusBox.className = "status";
+  if (type === "success") statusBox.classList.add("status--success");
+  else if (type === "error") statusBox.classList.add("status--error");
+  else statusBox.classList.add("status--loading");
 }
 
-function hideStatus() {
-  statusBox.hidden = true;
-}
-
-async function startCamera() {
-  showStatus('Requesting camera access…', 'loading');
-  btnCamera.disabled = true;
-
+// ---------- START CAMERA ----------
+btnCamera.onclick = async () => {
   try {
-    mediaStream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: 'user',
-        width: { ideal: 640 },
-        height: { ideal: 480 }
-      },
-      audio: false
-    });
+    stream = await navigator.mediaDevices.getUserMedia({ video: true });
 
-    videoEl.srcObject = mediaStream;
-    videoEl.style.display = 'block';
+    video.srcObject = stream;
+    video.style.display = "block";
 
-    cameraIdle.classList.add('hidden');
-
-    cameraActive = true;
-
-    btnCamera.querySelector('span:last-child').textContent = 'Stop Camera';
-    btnCamera.disabled = false;
+    cameraIdle.classList.add("hidden");
     btnLogin.disabled = false;
 
-    showStatus('Camera active — position your face in the frame', 'loading');
-
-  } catch (err) {
-    console.error('getUserMedia error:', err);
-
-    showStatus(
-      err.name === 'NotAllowedError'
-        ? 'Camera access denied. Please allow camera permissions and reload.'
-        : `Camera error: ${err.message}`,
-      'error'
-    );
-
-    btnCamera.disabled = false;
+    showStatus("Camera ready", "success");
+  } catch (e) {
+    showStatus("Camera access denied", "error");
   }
-}
+};
 
-function stopCamera() {
-  if (mediaStream) {
-    mediaStream.getTracks().forEach(track => track.stop());
-    mediaStream = null;
-  }
+// ---------- LOGIN ----------
+btnLogin.onclick = async () => {
+  if (!stream) return;
 
-  videoEl.srcObject = null;
-  videoEl.style.display = 'none';
-
-  cameraIdle.classList.remove('hidden');
-
-  cameraActive = false;
-
-  btnLogin.disabled = true;
-  btnCamera.querySelector('span:last-child').textContent = 'Start Camera';
-
-  hideStatus();
-}
-
-btnCamera.addEventListener('click', () => {
-  cameraActive ? stopCamera() : startCamera();
-});
-
-async function verifyIdentity() {
-  if (!cameraActive) return;
-
-  btnLogin.disabled = true;
-  btnCamera.disabled = true;
-
+  showStatus("Scanning face...", "loading");
   cameraScan.hidden = false;
 
-  showStatus('Scanning… please hold still', 'loading');
+  // capture frame
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
 
-  canvasEl.width = videoEl.videoWidth || 640;
-  canvasEl.height = videoEl.videoHeight || 480;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(video, 0, 0);
 
-  const ctx = canvasEl.getContext('2d');
-
-  ctx.save();
-  ctx.scale(-1, 1);
-  ctx.drawImage(videoEl, -canvasEl.width, 0, canvasEl.width, canvasEl.height);
-  ctx.restore();
-
-  const imageDataUrl = canvasEl.toDataURL('image/jpeg', 0.9);
+  const base64Image = canvas.toDataURL("image/jpeg");
 
   try {
-    const response = await fetch('/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ image_data: imageDataUrl })
+    const res = await fetch("/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        image: base64Image   // matches your backend
+      })
     });
 
-    const data = await response.json();
-
-    if (response.ok && data.success) {
-      showStatus(`✓ Welcome, ${data.name}! Redirecting…`, 'success');
-
-      cameraScan.hidden = true;
-
-      stopCamera();
-
-      setTimeout(() => {
-        window.location.href = '/dashboard';
-      }, 1200);
-
-    } else {
-      showStatus(
-        data.detail || data.message || 'Face not recognised. Please try again.',
-        'error'
-      );
-
-      cameraScan.hidden = true;
-
-      btnLogin.disabled = false;
-      btnCamera.disabled = false;
-    }
-
-  } catch (err) {
-    console.error('Network error during login:', err);
-
-    showStatus('Cannot reach server. Is the backend running?', 'error');
+    const data = await res.json();
 
     cameraScan.hidden = true;
 
-    btnLogin.disabled = false;
-    btnCamera.disabled = false;
-  }
-}
+    if (data.status === "success") {
+      showStatus("Welcome! Logging you in...", "success");
 
-btnLogin.addEventListener('click', verifyIdentity);
+      // optional redirect
+      setTimeout(() => {
+        window.location.href = "/dashboard";
+      }, 1000);
 
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && !btnLogin.disabled) {
-    verifyIdentity();
+    } else {
+      showStatus(data.message || "Face not recognised", "error");
+    }
+
+  } catch (err) {
+    cameraScan.hidden = true;
+    showStatus("Server error", "error");
   }
-});
+};
