@@ -2,6 +2,7 @@ from pymongo import MongoClient
 import sqlite3
 import csv
 import requests
+import base64
 
 
 mydb=sqlite3.connect('project_db')
@@ -40,10 +41,10 @@ with open('batch_data.csv',mode='r')as file:
             response=requests.get(image_url,timeout=5)
 
             if response.status_code ==200:
-                image=response.content
+                image_b64 = base64.b64encode(response.content).decode("utf-8")
                 collection.update_one(
                     {"uid": uid},
-                    {"$set": {"image": image}},
+                    {"$set": {"image": image_b64}},
                     upsert=True
                 )
                 sql="""INSERT INTO users (uid,name) VALUES (?,?) ON CONFLICT(uid) DO UPDATE SET name = excluded.name"""
