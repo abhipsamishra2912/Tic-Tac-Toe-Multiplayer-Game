@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Leaderboard</title>
+    </head>
+
+    <body>
+        
+        <h1>Leaderboard</h1>
+
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Name</th>
+                    <th>Elo</th>
+                </tr>
+            </thead>
+
+            <tbody id="Leaderboard-body"></tbody>
+        </table>
+
+        <script>
+            async function loadLeaderboard() {
+                const res = await fetch("/leaderboard");
+                const data = await res.json();
+
+                const tbody = document.getElementById("leaderboard-body");
+                tbody.innerHTML = "";
+
+                data.forEach((player, index) => {
+                    const row = 
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${player.name}</td>
+                        <td>${player.elo_rating}</td>
+                    </tr>
+                    ;
+                    tbody.innerHTML += row;
+                });
+            }
+            loadLeaderboard();
+        </script>
+    </body>
+</html>
