@@ -1,45 +1,32 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>Leaderboard</title>
-    </head>
+<head>
+    <title>Leaderboard</title>
 
-    <body>
-        
-        <h1>Leaderboard</h1>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
 
-        <table border="1">
-            <thead>
-                <tr>
-                    <th>Rank</th>
-                    <th>Name</th>
-                    <th>Elo</th>
-                </tr>
-            </thead>
+    <link rel="stylesheet" href="leaderboard.css">
+</head>
 
-            <tbody id="Leaderboard-body"></tbody>
-        </table>
+<body>
 
-        <script>
-            async function loadLeaderboard() {
-                const res = await fetch("/leaderboard");
-                const data = await res.json();
+<div class="container">
+    <h1>Leaderboard</h1>
 
-                const tbody = document.getElementById("leaderboard-body");
-                tbody.innerHTML = "";
+    <table>
+        <thead>
+            <tr>
+                <th>Rank</th>
+                <th>Player</th>
+                <th>Elo Rating</th>
+            </tr>
+        </thead>
 
-                data.forEach((player, index) => {
-                    const row = 
-                    <tr>
-                        <td>${index + 1}</td>
-                        <td>${player.name}</td>
-                        <td>${player.elo_rating}</td>
-                    </tr>
-                    ;
-                    tbody.innerHTML += row;
-                });
-            }
-            loadLeaderboard();
-        </script>
-    </body>
+        <tbody id="leaderboard-body"></tbody>
+    </table>
+</div>
+
+<script src="leaderboard.js"></script>
+
+</body>
 </html>
