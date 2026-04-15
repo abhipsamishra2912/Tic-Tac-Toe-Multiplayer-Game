@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terminal Tic-Tac-Toe</title>
+    <link rel="stylesheet" href="game.css">
+</head>
+<body>
+
+    <div class="device-frame">
+        
+        <div class="screen-border">
+            
+            <div class="header-stats">
+                <span>UID: <span id="player-uid">WAITING</span></span>
+                <span>ELO: <span id="player-elo">--</span></span>
+                <span class="hp-text">[ 104/125 ]</span>
+            </div>
+
+            <div class="health-bar-container">
+                <div class="health-bar"><div class="health-fill"></div></div>
+            </div>
+
+            <div class="status-text" id="game-status">
+                SYSTEM: Waiting for connection...
+            </div>
+
+            <div class="board" id="board">
+                <div class="cell" data-index="0"></div>
+                <div class="cell" data-index="1"></div>
+                <div class="cell" data-index="2"></div>
+                <div class="cell" data-index="3"></div>
+                <div class="cell" data-index="4"></div>
+                <div class="cell" data-index="5"></div>
+                <div class="cell" data-index="6"></div>
+                <div class="cell" data-index="7"></div>
+                <div class="cell" data-index="8"></div>
+            </div>
+
+            <div class="log-panel" id="log-panel">
+                <p>> Initializing communication module...</p>
+            </div>
+
+            <div class="controls">
+                <button onclick="mockConnect()">CONNECT</button>
+                <button onclick="clearLog()">CLEAR LOG</button>
+                <button class="btn-forfeit">FORFEIT</button>
+            </div>
+            
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>

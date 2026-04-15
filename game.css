@@ -1,0 +1,202 @@
+/* Import a retro terminal font from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+/* --- COLOR PALETTE & VARIABLES --- */
+:root {
+    --bg-color: #0c1410;       /* Dark background outside the terminal */
+    --terminal-bg: #11201a;    /* Very dark green background for the screen */
+    --main-green: #62a37c;     /* Bright phosphor green for text and lines */
+    --dark-green: #2a4a38;     /* Dimmed green for borders and backgrounds */
+    --alert-red: #b05c5c;      /* Faded red for health/errors */
+    --glow: 0 0 5px rgba(98, 163, 124, 0.5); /* Text glowing effect */
+    --font-main: 'VT323', monospace;
+}
+
+/* --- RESET & BASE STYLES --- */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--main-green);
+    font-family: var(--font-main);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
+    font-size: 20px;
+}
+
+/* --- CRT MONITOR EFFECTS --- */
+/* This creates the horizontal scanlines seen on old monitors */
+body::after {
+    content: " ";
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+    z-index: 2;
+    background-size: 100% 4px, 6px 100%;
+    pointer-events: none; /* Allows you to click through the overlay */
+}
+
+/* --- TERMINAL CASING --- */
+.device-frame {
+    background-color: var(--terminal-bg);
+    border: 2px solid var(--dark-green);
+    border-radius: 20px;
+    padding: 20px;
+    width: 400px;
+    /* Adds a drop shadow outside, and an inner shadow for depth */
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.8), inset 0 0 15px rgba(0,0,0,0.5);
+    position: relative;
+    z-index: 1;
+}
+
+/* Inner border that holds the UI elements */
+.screen-border {
+    border: 1px solid var(--main-green);
+    padding: 15px;
+    position: relative;
+}
+
+/* Adds the tiny decorative square corners */
+.screen-border::before, .screen-border::after {
+    content: '';
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border: 1px solid var(--main-green);
+}
+.screen-border::before { top: -4px; left: -4px; border-right: none; border-bottom: none; }
+.screen-border::after { top: -4px; right: -4px; border-left: none; border-bottom: none; }
+
+/* --- HEADER & STATS --- */
+.header-stats {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px dashed var(--main-green);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+    font-size: 18px;
+    text-shadow: var(--glow);
+}
+
+.hp-text {
+    color: var(--alert-red);
+}
+
+.health-bar-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.health-bar {
+    width: 150px;
+    height: 15px;
+    background-color: var(--dark-green);
+    border: 1px solid var(--alert-red);
+}
+
+.health-fill {
+    width: 80%; /* Hardcoded for aesthetic purposes */
+    height: 100%;
+    background-color: var(--alert-red);
+}
+
+/* --- MAIN GAME UI --- */
+.status-text {
+    text-align: center;
+    margin-bottom: 20px;
+    text-shadow: var(--glow);
+    min-height: 24px;
+}
+
+/* The Grid Container */
+.board {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 3 columns */
+    gap: 4px; /* Space between cells acts as grid lines */
+    background-color: var(--main-green);
+    border: 2px solid var(--main-green);
+    margin: 0 auto 20px;
+    width: 250px;
+    height: 250px;
+    box-shadow: var(--glow);
+}
+
+/* Individual Grid Squares */
+.cell {
+    background-color: var(--terminal-bg);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 48px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    text-shadow: var(--glow);
+}
+
+.cell:hover {
+    background-color: var(--dark-green);
+}
+
+.cell.disabled {
+    cursor: not-allowed;
+}
+
+/* --- BOTTOM CONTROLS --- */
+.log-panel {
+    border: 1px solid var(--dark-green);
+    padding: 10px;
+    font-size: 16px;
+    height: 80px;
+    overflow-y: auto;
+    color: rgba(98, 163, 124, 0.8);
+}
+
+.log-panel p {
+    margin-bottom: 5px;
+}
+
+.controls {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+}
+
+button {
+    background-color: transparent;
+    color: var(--main-green);
+    border: 1px solid var(--main-green);
+    font-family: var(--font-main);
+    padding: 5px 15px;
+    font-size: 18px;
+    cursor: pointer;
+    text-shadow: var(--glow);
+    transition: all 0.2s;
+}
+
+button:hover {
+    background-color: var(--main-green);
+    color: var(--terminal-bg);
+}
+
+.btn-forfeit {
+    border-color: var(--alert-red); 
+    color: var(--alert-red);
+}
+
+.btn-forfeit:hover {
+    background-color: var(--alert-red);
+    color: var(--terminal-bg);
+}
