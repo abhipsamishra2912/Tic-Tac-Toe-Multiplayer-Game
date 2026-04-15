@@ -28,8 +28,6 @@ def update_ratings_in_db(uid1, uid2, new_r1, new_r2):
     cursor = conn.cursor()
 
     try:
-        conn.execute("BEGIN")
-
         cursor.execute(
             "UPDATE users SET elo_rating = ? WHERE uid = ?",
             (new_r1, uid1)
@@ -69,11 +67,14 @@ def determine_actual_score(winner_uid, uid1, uid2):
         raise ValueError("Invalid winner_uid")
     
 def compute_new_ratings(r1, r2, E1, E2, S1, S2, K=32):
-    new_r1 = int(r1 + K * (S1 - E1))
-    new_r2 = int(r2 + K * (S2 - E2))
+    new_r1 = round(r1 + K * (S1 - E1))
+    new_r2 = round(r2 + K * (S2 - E2))
     return new_r1, new_r2
 
 def update_ratings(uid1, uid2, winner_uid):
+    if uid1 == uid2:
+        raise ValueError("Cannot update rating for same player")
+    
     r1, r2 = get_player_ratings(uid1, uid2)
 
     E1, E2 = compute_expected_score(r1, r2)
@@ -87,8 +88,7 @@ def update_ratings(uid1, uid2, winner_uid):
     return {uid1:new_r1, uid2:new_r2}
 
 def handle_forfeit(winner_uid, loser_uid):
-    result = f"{winner_uid}_win"
-    return update_ratings(winner_uid, loser_uid, result)
+    return update_ratings(winner_uid, loser_uid, winner_uid)
 
 def get_leaderboard():
     conn = get_connection()
