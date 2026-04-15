@@ -1,142 +1,112 @@
-games = {}
+import sqlite3
 
+DB_PATH = "project_db.db"
 
-class GameManager:
-    def __init__(self, connection_manager, elo_manager, match_manager):
-        self.connection_manager = connection_manager
-        self.elo_manager = elo_manager
-        self.match_manager = match_manager
+def get_connection():
+    return sqlite3.connect(DB_PATH)
 
-    async def start_game(self, room_id, player1, player2):
-        game = {
-            "room_id": room_id,
-            "player1": player1,
-            "player2": player2,
-            "board": [None for _ in range(9)],
-            "turn": player1,
-            "symbol": {
-                player1: "X",
-                player2: "O",
-            },
-            "status": "active",
-        }
+def get_player_ratings(uid1, uid2):
+    conn = get_connection()
+    cursor = conn.cursor()
 
-        games[room_id] = game
-        await self.send_game_start(game)
+    cursor.execute(
+        "SELECT uid, elo_rating FROM users WHERE uid IN (?, ?)",
+        (uid1, uid2)
+    )
 
-    async def handle_move(self, uid, room_id, position):
-        game = games.get(room_id)
-        if not game or game["status"] != "active":
-            return
+    rows = cursor.fetchall()
+    conn.close()
 
-        if uid != game["turn"]:
-            return
+    if len(rows) != 2:
+        raise ValueError("One or both users not found")
+    
+    ratings = {uid: rating for uid, rating in rows}
+    return ratings[uid1], ratings[uid2]
 
-        if position not in range(9):
-            return
+def update_ratings_in_db(uid1, uid2, new_r1, new_r2):
+    conn = get_connection()
+    cursor = conn.cursor()
 
-        if game["board"][position] is not None:
-            return
+    try:
+        conn.execute("BEGIN")
 
-        game["board"][position] = game["symbol"][uid]
-        winner_symbol = self.check_win(game["board"])
-
-        if winner_symbol:
-            winner_uid = next(
-                (user for user, symbol in game["symbol"].items() if symbol == winner_symbol),
-                None,
-            )
-            await self.end_game(room_id, winner_uid)
-            return
-
-        if self.check_draw(game["board"]):
-            await self.end_game(room_id, None)
-            return
-
-        game["turn"] = (
-            game["player2"] if uid == game["player1"] else game["player1"]
-        )
-        await self.send_game_update(game)
-
-    def check_win(self, board):
-        win_patterns = (
-            (0, 1, 2), (3, 4, 5), (6, 7, 8),
-            (0, 3, 6), (1, 4, 7), (2, 5, 8),
-            (0, 4, 8), (2, 4, 6),
+        cursor.execute(
+            "UPDATE users SET elo_rating = ? WHERE uid = ?",
+            (new_r1, uid1)
         )
 
-        for a, b, c in win_patterns:
-            if board[a] and board[a] == board[b] == board[c]:
-                return board[a]
-
-        return None
-
-    def check_draw(self, board):
-        return all(cell is not None for cell in board)
-
-    async def end_game(self, room_id, winner_uid):
-        game = games.get(room_id)
-        if not game:
-            return
-
-        game["status"] = "finished"
-        await self.send_game_end(game, winner_uid)
-
-        await self.elo_manager.update_ratings(
-            game["player1"],
-            game["player2"],
-            winner_uid,
+        cursor.execute(
+            "UPDATE users SET elo_rating = ? WHERE uid = ?",
+            (new_r2, uid2)
         )
 
-        games.pop(room_id, None)
-        await self.match_manager.cleanup_room(room_id)
+        conn.commit()
 
-    async def handle_disconnect(self, uid, room_id):
-        game = games.get(room_id)
-        if not game or game["status"] != "active":
-            return
+    except Exception as e:
+        conn.rollback()
+        raise e
+    
+    finally:
+        conn.close()
 
-        opponent = (
-            game["player2"] if uid == game["player1"] else game["player1"]
-        )
-        await self.end_game(room_id, opponent)
 
-    async def send_game_start(self, game):
-        for uid in (game["player1"], game["player2"]):
-            await self.connection_manager.send_to_user(
-                uid,
-                {
-                    "type": "game_start",
-                    "data": {
-                        "room_id": game["room_id"],
-                        "symbol": game["symbol"][uid],
-                        "turn": game["turn"],
-                    },
-                },
-            )
+def compute_expected_score(r1, r2):
+    E1 = 1 / (1 + 10 ** ((r2 - r1) / 400))
+    E2 = 1 / (1 + 10 ** ((r1 - r2) / 400))
+    return E1, E2
 
-    async def send_game_update(self, game):
-        for uid in (game["player1"], game["player2"]):
-            await self.connection_manager.send_to_user(
-                uid,
-                {
-                    "type": "game_update",
-                    "data": {
-                        "board": game["board"],
-                        "turn": game["turn"],
-                    },
-                },
-            )
+def determine_actual_score(winner_uid, uid1, uid2):
+    if winner_uid is None:
+        return 0.5, 0.5
+    
+    elif winner_uid == uid1:
+        return 1.0, 0.0
+    
+    elif winner_uid == uid2:
+        return 0.0, 1.0
+    
+    else:
+        raise ValueError("Invalid winner_uid")
+    
+def compute_new_ratings(r1, r2, E1, E2, S1, S2, K=32):
+    new_r1 = int(r1 + K * (S1 - E1))
+    new_r2 = int(r2 + K * (S2 - E2))
+    return new_r1, new_r2
 
-    async def send_game_end(self, game, winner_uid):
-        for uid in (game["player1"], game["player2"]):
-            await self.connection_manager.send_to_user(
-                uid,
-                {
-                    "type": "game_end",
-                    "data": {
-                        "winner": winner_uid,
-                        "board": game["board"],
-                    },
-                },
-            )
+def update_ratings(uid1, uid2, winner_uid):
+    r1, r2 = get_player_ratings(uid1, uid2)
+
+    E1, E2 = compute_expected_score(r1, r2)
+
+    S1, S2 = determine_actual_score(winner_uid, uid1, uid2)
+
+    new_r1, new_r2 = compute_new_ratings(r1, r2, E1, E2, S1, S2)
+
+    update_ratings_in_db(uid1, uid2, new_r1, new_r2)
+
+    return {uid1:new_r1, uid2:new_r2}
+
+def handle_forfeit(winner_uid, loser_uid):
+    result = f"{winner_uid}_win"
+    return update_ratings(winner_uid, loser_uid, result)
+
+def get_leaderboard():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT uid, name, elo_rating FROM users ORDER BY elo_rating DESC
+    """)
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    leaderboard = []
+    for uid, name, rating in rows:
+        leaderboard.append({
+            "uid": uid,
+            "name": name,
+            "elo_rating": rating
+        })
+
+    return leaderboard
