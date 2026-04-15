@@ -5,6 +5,7 @@ import base64
 
 from auth import authenticate
 from db import set_user_online
+from elo_manager import get_leaderboard
 
 app = FastAPI()
 
@@ -40,3 +41,7 @@ async def login(request: Request):
         "uid": uid,
         "message": "Login successful"
     }
+
+@app.get("/leaderboard")
+def leaderboard():
+    return get_leaderboard()
