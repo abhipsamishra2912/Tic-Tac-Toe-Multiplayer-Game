@@ -12,7 +12,6 @@ const statusMsg = document.getElementById("statusMsg");
 
 let stream = null;
 
-// ---------- STATUS ----------
 function showStatus(msg, type = "loading") {
   statusBox.hidden = false;
   statusMsg.textContent = msg;
@@ -61,7 +60,7 @@ btnLogin.onclick = async () => {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        image: base64Image   // matches your backend
+        image: base64Image 
       })
     });
 
@@ -85,3 +84,23 @@ btnLogin.onclick = async () => {
     showStatus("Server error", "error");
   }
 };
+
+const toggleBtn = document.getElementById("theme-toggle");
+
+if (localStorage.getItem("theme") === "dark") {
+    document.body.classList.add("dark");
+    toggleBtn.textContent = "🌙";
+}
+
+toggleBtn.addEventListener("click", () => {
+    document.body.classList.toggle("dark");
+
+    if (document.body.classList.contains("dark")) {
+        localStorage.setItem("theme", "dark");
+        toggleBtn.textContent = "🌙";
+    }
+    else {
+        localStorage.setItem("theme", "light");
+        toggleBtn.textContent = "☀️";
+    }
+});
