@@ -1,18 +1,16 @@
-/* Import a retro terminal font from Google Fonts */
+
 @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
 
-/* --- COLOR PALETTE & VARIABLES --- */
 :root {
-    --bg-color: #0c1410;       /* Dark background outside the terminal */
-    --terminal-bg: #11201a;    /* Very dark green background for the screen */
-    --main-green: #62a37c;     /* Bright phosphor green for text and lines */
-    --dark-green: #2a4a38;     /* Dimmed green for borders and backgrounds */
-    --alert-red: #b05c5c;      /* Faded red for health/errors */
-    --glow: 0 0 5px rgba(98, 163, 124, 0.5); /* Text glowing effect */
+    --bg-color: #0c1410;       
+    --terminal-bg: #11201a;   
+    --main-green: #62a37c;    
+    --dark-green: #2a4a38;   
+    --alert-red: #b05c5c;     
+    --glow: 0 0 5px rgba(98, 163, 124, 0.5); 
     --font-main: 'VT323', monospace;
 }
 
-/* --- RESET & BASE STYLES --- */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -30,9 +28,6 @@ body {
     overflow: hidden;
     font-size: 20px;
 }
-
-/* --- CRT MONITOR EFFECTS --- */
-/* This creates the horizontal scanlines seen on old monitors */
 body::after {
     content: " ";
     display: block;
@@ -45,30 +40,26 @@ body::after {
                 linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
     z-index: 2;
     background-size: 100% 4px, 6px 100%;
-    pointer-events: none; /* Allows you to click through the overlay */
+    pointer-events: none;
 }
 
-/* --- TERMINAL CASING --- */
 .device-frame {
     background-color: var(--terminal-bg);
     border: 2px solid var(--dark-green);
     border-radius: 20px;
     padding: 20px;
     width: 400px;
-    /* Adds a drop shadow outside, and an inner shadow for depth */
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.8), inset 0 0 15px rgba(0,0,0,0.5);
     position: relative;
     z-index: 1;
 }
 
-/* Inner border that holds the UI elements */
 .screen-border {
     border: 1px solid var(--main-green);
     padding: 15px;
     position: relative;
 }
 
-/* Adds the tiny decorative square corners */
 .screen-border::before, .screen-border::after {
     content: '';
     position: absolute;
@@ -79,7 +70,6 @@ body::after {
 .screen-border::before { top: -4px; left: -4px; border-right: none; border-bottom: none; }
 .screen-border::after { top: -4px; right: -4px; border-left: none; border-bottom: none; }
 
-/* --- HEADER & STATS --- */
 .header-stats {
     display: flex;
     justify-content: space-between;
@@ -108,12 +98,11 @@ body::after {
 }
 
 .health-fill {
-    width: 80%; /* Hardcoded for aesthetic purposes */
+    width: 80%;
     height: 100%;
     background-color: var(--alert-red);
 }
 
-/* --- MAIN GAME UI --- */
 .status-text {
     text-align: center;
     margin-bottom: 20px;
@@ -121,11 +110,10 @@ body::after {
     min-height: 24px;
 }
 
-/* The Grid Container */
 .board {
     display: grid;
-    grid-template-columns: repeat(3, 1fr); /* 3 columns */
-    gap: 4px; /* Space between cells acts as grid lines */
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
     background-color: var(--main-green);
     border: 2px solid var(--main-green);
     margin: 0 auto 20px;
@@ -134,7 +122,6 @@ body::after {
     box-shadow: var(--glow);
 }
 
-/* Individual Grid Squares */
 .cell {
     background-color: var(--terminal-bg);
     display: flex;
@@ -154,7 +141,6 @@ body::after {
     cursor: not-allowed;
 }
 
-/* --- BOTTOM CONTROLS --- */
 .log-panel {
     border: 1px solid var(--dark-green);
     padding: 10px;
