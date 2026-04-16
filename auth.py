@@ -1,5 +1,5 @@
-from utils.facial_recognition_module import find_closest_match, build_encodings_cache
-from db import get_images, user_exists
+from utils.facial_recognition_module import find_closest_match
+from db import user_exists
 import asyncio
 
 encodings_cache = {}
