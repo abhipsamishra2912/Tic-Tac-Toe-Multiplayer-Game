@@ -1,6 +1,7 @@
 from fastapi import WebSocket, WebSocketDisconnect, FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+import asyncio
 import json
 from managers.game_manager import GameManager
 from managers.elo_manager import update_ratings
@@ -9,6 +10,7 @@ from auth import authenticate
 from db import set_user_online
 from managers.match_manager import MatchManager
 from managers.room_manager import RoomManager
+from utils.facial_recognition_module import build_encodings_cache
 app = FastAPI()
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -21,6 +23,15 @@ manager = ConnectionManager(match_manager, room_manager, game_manager)
 game_manager.connection_manager = manager
 match_manager.room_manager = room_manager
 match_manager.game_manager = game_manager
+
+@app.on_event("startup")
+async def startup():
+    loop = asyncio.get_event_loop()
+    db_images = await loop.run_in_executor(None, get_images)
+    global encodings_cache
+    encodings_cache = build_encodings_cache(db_images)
+    print(f"Server ready. Encodings cache loaded.")
+    
 @app.get("/")
 def serve_login():
     return FileResponse("static/login.html")
