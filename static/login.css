@@ -189,3 +189,27 @@ html, body {
   font-weight: bold;
   color: #000;
 }
+
+#videoFeed {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.camera__idle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: var(--neon-pink);
+}
+
+.camera__idle-icon {
+  font-size: 2rem;
+  margin-bottom: 8px;
+}
