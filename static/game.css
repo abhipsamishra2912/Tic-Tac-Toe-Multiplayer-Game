@@ -11,6 +11,20 @@
     --font-main: 'VT323', monospace;
 }
 
+body.dark {
+    --bg-color: #f5f1e8;
+    --terminal-bg: #ffffff;    
+    --main-green: #410200;     
+    --dark-green: #c4a484;     
+    --alert-red: #b05c5c;      
+    --highlight-color: #000000;
+    
+    --font-mono: 'VT323', monospace;
+
+    --border-terminal: 1px solid var(--main-green);
+    --glow: 0 0 10px rgba(98, 163, 124, 0.5);
+}
+
 * {
     box-sizing: border-box;
     margin: 0;
@@ -36,8 +50,6 @@ body::after {
     left: 0;
     bottom: 0;
     right: 0;
-    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
-                linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
     z-index: 2;
     background-size: 100% 4px, 6px 100%;
     pointer-events: none;
@@ -52,6 +64,28 @@ body::after {
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.8), inset 0 0 15px rgba(0,0,0,0.5);
     position: relative;
     z-index: 1;
+}
+
+#theme-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+
+    border: 1px solid var(--main-green);
+    background: transparent;
+    color: var(--main-green);
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    padding: 5px 15px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+#theme-toggle:hover {
+    background: var(--main-green);
+    color: var(--terminal-bg);
+    box-shadow: var(--glow);
 }
 
 .screen-border {
@@ -147,7 +181,7 @@ body::after {
     font-size: 16px;
     height: 80px;
     overflow-y: auto;
-    color: rgba(98, 163, 124, 0.8);
+    color: var(--highlight-color);
 }
 
 .log-panel p {
