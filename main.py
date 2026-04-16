@@ -2,6 +2,7 @@ from fastapi import WebSocket, WebSocketDisconnect, FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 import json
+from auth import authenticate, init_cache
 from managers.game_manager import GameManager
 from managers.elo_manager import update_ratings
 from managers.ws_manager import ConnectionManager
@@ -12,7 +13,7 @@ from managers.room_manager import RoomManager
 app = FastAPI()
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
-
+    
 sessions = {}
 match_manager = MatchManager()
 room_manager = RoomManager()
@@ -21,6 +22,13 @@ manager = ConnectionManager(match_manager, room_manager, game_manager)
 game_manager.connection_manager = manager
 match_manager.room_manager = room_manager
 match_manager.game_manager = game_manager
+
+@app.on_event("startup")
+async def startup_event():
+    print("Building face encodings cache...")
+    init_cache()
+    print("Cache ready")
+
 @app.get("/")
 def serve_login():
     return FileResponse("static/login.html")

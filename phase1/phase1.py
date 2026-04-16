@@ -3,6 +3,7 @@ import sqlite3
 import csv
 import requests
 import base64
+from utils.facial_recognition_module import get_face_encoding
 
 
 mydb=sqlite3.connect('project_db')
@@ -38,14 +39,19 @@ with open('batch_data.csv',mode='r')as file:
         image_url=website_url+"/images/pfp.jpg"
         image_url="https://"+image_url
         try:
-            response=requests.get(image_url,timeout=5)
+            response=requests.get(image_url,timeout=15)
 
             if response.status_code ==200:
-                image_b64 = base64.b64encode(response.content).decode("utf-8")
+                image_bytes = response.content
+                enc = get_face_encoding(image_bytes)
+                if enc is None:
+                    print(f"uid:{uid} Invalid image (no face) → skipped")
+                    continue
+
                 collection.update_one(
-                    {"uid": uid},
-                    {"$set": {"image": image_b64}},
-                    upsert=True
+                {"uid": uid},
+                {"$set": {"image": image_bytes}},
+                upsert=True
                 )
                 sql="""INSERT INTO users (uid,name) VALUES (?,?) ON CONFLICT(uid) DO UPDATE SET name = excluded.name"""
                 mycursor.execute(sql,(uid,name))
