@@ -30,6 +30,16 @@ function handleServerMessage(message) {
         resetBoardUI();
         updateTurnStatusText();
     } 
+    else if (type === "game_update") {
+        updateBoardUI(data.board);
+        currentTurn = data.turn;
+        updateTurnStatusText();
+    } 
+    else if (type === "game_end") {
+        updateBoardUI(data.board);
+        handleGameEnd(data.winner);
+    }
+}
     function checkWinner(board) {
     const winPatterns = [
         [0,1,2], [3,4,5], [6,7,8], // rows
@@ -49,16 +59,6 @@ function handleServerMessage(message) {
     }
 
     return null;
-}
-    else if (type === "game_update") {
-        updateBoardUI(data.board);
-        currentTurn = data.turn;
-        updateTurnStatusText();
-    } 
-    else if (type === "game_end") {
-        updateBoardUI(data.board);
-        handleGameEnd(data.winner);
-    }
 }
 
 cells.forEach(cell => {
