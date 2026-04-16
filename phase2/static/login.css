@@ -1,191 +1,206 @@
 @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
 
 :root {
-  /* Vibrant Vaporwave Palette from image_4.png */
-  --bg-dark-grid: #5400ff; /* Bright purple from the image */
-  --neon-pink:    #ff00f2;
-  --neon-teal:    #00ffea;
-  --neon-yellow:  #ffe600;
-  
-  --panel-light:  #f0f0f0; /* Off-white windows */
-  --panel-border: #000;    /* Classic 1-bit black borders */
-  
-  /* Fonts */
-  --font-mono:    'VT323', monospace;
+    --bg-color: #0c1410;       
+    --terminal-bg: #11201a;    
+    --main-green: #62a37c;     
+    --dark-green: #2a4a38;    
+    --alert-red: #b05c5c;      
+    --highlight-color: #ffffff;
 
-  /* Edgy UI Elements */
-  --border-classic: 2px solid #000;
-  --radius-chunky:  15px; /* Softer, but still blocky corners */
-  --shadow-retro:   5px 5px 0px #000; /* Chunky, non-blurred shadows */
-  --transition:     0.1s steps(4);
+    --font-mono: 'VT323', monospace;
+
+    --border-terminal: 1px solid var(--main-green);
+    --glow: 0 0 10px rgba(98, 163, 124, 0.5);
+    --transition: 0.1s steps(4);
+}
+
+body.dark {
+    --bg-color: #f5f1e8;
+    --terminal-bg: #ffffff;    
+    --main-green: #410200;     
+    --dark-green: #c4a484;     
+    --alert-red: #b05c5c;      
+    --highlight-color: #000000;
+    
+    --font-mono: 'VT323', monospace;
+
+    --border-terminal: 1px solid var(--main-green);
+    --glow: 0 0 10px rgba(98, 163, 124, 0.5);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-html, body {
-  height: 100%;
-  font-family: var(--font-mono);
-  background-color: var(--bg-dark-grid);
-  /* The iconic vaporwave grid from image_4.png */
-  background-image: 
-    linear-gradient(rgba(255, 255, 255, 0.2) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.2) 1px, transparent 1px);
-  background-size: 40px 40px;
-  color: #000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+body::after {
+    content: " ";
+    display: block;
+    position: fixed;
+    top: 0; left: 0; bottom: 0; right: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+    z-index: 10;
+    background-size: 100% 4px, 3px 100%;
+    pointer-events: none;
 }
 
-/* The Main Window - Styled like an old OS popup */
+#theme-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+
+    border: 1px solid var(--main-green);
+    background: transparent;
+    color: var(--main-green);
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    padding: 5px 15px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+#theme-toggle:hover {
+    background: var(--main-green);
+    color: var(--terminal-bg);
+    box-shadow: var(--glow);
+}
+
+body {
+    height: 100vh;
+    font-family: var(--font-mono);
+    background-color: var(--bg-color);
+    color: var(--main-green);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
 .card {
-  width: 480px;
-  background: var(--panel-light);
-  border: var(--border-classic);
-  box-shadow: var(--shadow-retro);
-  border-radius: var(--radius-chunky);
-  padding: 40px 30px 30px;
-  display: flex;
-  flex-direction: column;
-  align-items: center; /* Center everything horizontal */
-  gap: 20px;
+    width: 480px;
+    background: var(--terminal-bg);
+    border: var(--border-terminal);
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.8), var(--glow);
+    padding: 40px 30px 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    position: relative;
 }
 
-/* Adding a custom OS Window Header/Titlebar */
 .card::before {
-  content: "FACE_AUTHENTICATION.EXE";
-  display: block;
-  background: var(--neon-teal);
-  color: #000;
-  font-weight: bold;
-  font-size: 1.1rem;
-  padding: 10px;
-  margin: -40px -30px 20px;
-  width: calc(100% + 60px);
-  border-bottom: var(--border-classic);
-  border-radius: var(--radius-chunky) var(--radius-chunky) 0 0;
-  text-align: left;
+    content: "[ SYSTEM_ACCESS_PROTOCOL_V.4.0 ]";
+    display: block;
+    background: var(--dark-green);
+    color: var(--main-green);
+    font-size: 1rem;
+    padding: 8px 15px;
+    margin: -40px -30px 20px;
+    width: calc(100% + 60px);
+    border-bottom: var(--border-terminal);
+    text-align: center;
+    letter-spacing: 2px;
 }
 
 .card__title {
-  font-size: 2.2rem;
-  color: #000;
+    font-size: 2rem;
+    color: var(--main-green);
+    text-transform: uppercase;
+    text-shadow: var(--glow);
 }
 
 .card__title em {
-  font-style: normal;
-  color: var(--neon-pink);
-  text-shadow: 2px 2px 0px var(--neon-teal);
-}
-
-/* Centered Vapor Console for Face ID */
-.camera {
-  display: flex;
-  justify-content: center;
-  width: 100%;
+    font-style: normal;
+    color: var(--highlight-color); 
+    text-shadow: 0 0 12px var(--main-green);
 }
 
 .camera__frame {
-  width: 320px;
-  height: 240px;
-  border: 4px solid var(--neon-pink); /* Glowing pink frame */
-  background: #000;
-  position: relative;
-  border-radius: var(--radius-chunky);
-  box-shadow: 0 0 20px rgba(255, 0, 242, 0.3);
-  overflow: hidden;
-}
-
-/* CRT Scanline Effect (softened) */
-.camera__frame::after {
-  content: " ";
-  display: block;
-  position: absolute;
-  top: 0; left: 0; bottom: 0; right: 0;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), 
-              linear-gradient(90deg, rgba(255, 0, 242, 0.03), rgba(0, 255, 234, 0.03));
-  background-size: 100% 4px, 3px 100%;
-  pointer-events: none;
-  z-index: 2;
+    width: 320px;
+    height: 240px;
+    border: 1px solid var(--main-green);
+    background: var(--bg-color);
+    position: relative;
+    overflow: hidden;
+    box-shadow: inset 0 0 15px var(--dark-green);
 }
 
 .scan__line {
-  background: var(--neon-pink);
-  height: 3px;
-  filter: blur(1px);
+    background: var(--main-green);
+    height: 2px;
+    width: 100%;
+    position: absolute;
+    box-shadow: 0 0 15px var(--main-green);
+    animation: terminalScan 3s linear infinite;
 }
 
-/* Modern/Chunky Buttons */
+@keyframes terminalScan {
+    0% { top: 0; opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { top: 100%; opacity: 0; }
+}
+
 .btn {
-  border-radius: var(--radius-chunky);
-  border: var(--border-classic);
-  font-size: 1.2rem;
-  text-transform: uppercase;
-  padding: 15px 25px;
-  box-shadow: 5px 5px 0px #000;
+    background: transparent;
+    border: var(--border-terminal);
+    color: var(--main-green);
+    font-family: var(--font-mono);
+    font-size: 1.2rem;
+    text-transform: uppercase;
+    padding: 10px 30px;
+    cursor: pointer;
+    transition: all 0.2s;
 }
 
-.btn--primary {
-  background: var(--neon-teal); /* Modern cyan primary */
-  color: #000;
+.btn--primary:hover {
+    background: var(--main-green);
+    color: var(--terminal-bg);
+    box-shadow: var(--glow);
 }
 
 .btn--secondary {
-  background: #e0e0e0; /* Neutral grey secondary */
-  color: #000;
+    border-color: var(--dark-green);
+    color: var(--dark-green);
 }
 
 .btn:active {
-  transform: translate(3px, 3px);
-  box-shadow: 1px 1px 0px #000;
+    transform: scale(0.98);
 }
 
-/* Status Indicator as a Vapor Terminal */
 .status {
-  width: 100%;
-  background: #000;
-  color: var(--neon-pink);
-  border: 2px solid var(--neon-pink);
-  font-family: var(--font-mono);
-  font-size: 1.1rem;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    color: var(--main-green);
+    border: 1px dashed var(--dark-green);
+    padding: 10px;
+    font-size: 1rem;
+    text-align: left;
 }
 
 .status__dot {
-  background: var(--neon-pink);
-  box-shadow: 0 0 10px var(--neon-pink);
-  border-radius: 0;
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: var(--main-green);
+    margin-right: 10px;
+    box-shadow: var(--glow);
+    animation: blink 1s steps(2) infinite;
 }
 
-/* 1. Define the rotation animation */
-@keyframes arcadeRotate {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 15px;
+@keyframes blink {
+    to { visibility: hidden; }
 }
 
 .logo__icon {
-  display: inline-block;
-  font-size: 1.8rem;
-  color: var(--neon-pink);
-  animation: arcadeRotate 4s linear infinite;
-  filter: drop-shadow(0 0 8px var(--neon-pink));
-  /* animation: arcadeRotate 2s steps(8) infinite; */
+    font-size: 1.8rem;
+    color: var(--main-green);
+    animation: arcadeRotate 6s linear infinite;
+    text-shadow: var(--glow);
 }
 
-.logo__text {
-  font-family: var(--font-main);
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  font-weight: bold;
-  color: #000;
+@keyframes arcadeRotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
