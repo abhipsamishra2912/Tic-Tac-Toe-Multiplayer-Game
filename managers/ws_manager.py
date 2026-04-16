@@ -54,10 +54,10 @@ class ConnectionManager:
         if msg["type"] == "find_match":
             await self.match_manager.find_match(uid)
 
-        elif msg["type"] == "send_challenge":                        # NEW
+        elif msg["type"] == "send_challenge":                      
             await self.match_manager.send_challenge(uid, msg["target_uid"])
 
-        elif msg["type"] == "respond_challenge":                     # NEW
+        elif msg["type"] == "respond_challenge":                    
             await self.match_manager.respond_challenge(
                 uid, msg["challenger_uid"], msg["accepted"]
             )
