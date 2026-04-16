@@ -33,6 +33,8 @@ def get_face_encoding(image_data):
     """
     try:
         image_bytes = _to_bytes(image_data)
+        print(f"DEBUG: first 4 bytes = {image_bytes[:4].hex()}") 
+        image_bytes = _to_bytes(image_data)
         image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
         image_np = np.array(image)
 
