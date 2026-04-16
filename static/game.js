@@ -30,7 +30,26 @@ function handleServerMessage(message) {
         resetBoardUI();
         updateTurnStatusText();
     } 
-    
+    function checkWinner(board) {
+    const winPatterns = [
+        [0,1,2], [3,4,5], [6,7,8], // rows
+        [0,3,6], [1,4,7], [2,5,8], // cols
+        [0,4,8], [2,4,6]           // diagonals
+    ];
+
+    for (let pattern of winPatterns) {
+        const [a, b, c] = pattern;
+        if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+            return board[a]; // returns "X" or "O"
+        }
+    }
+
+    if (board.every(cell => cell !== null)) {
+        return "DRAW";
+    }
+
+    return null;
+}
     else if (type === "game_update") {
         updateBoardUI(data.board);
         currentTurn = data.turn;
@@ -125,17 +144,47 @@ function mockConnect() {
 
 function mockBackendResponse(clickedIndex) {
     mockBoard[clickedIndex] = "X"; 
+
+    let result = checkWinner(mockBoard);
+
+    if (result) {
+        handleServerMessage({
+            type: "game_end",
+            data: {
+                board: mockBoard,
+                winner: result === "DRAW" ? null : (result === "X" ? myUid : "opponent_456")
+            }
+        });
+        return;
+    }
+
     handleServerMessage({
         type: "game_update",
         data: { board: mockBoard, turn: "opponent_456" }
     });
+
     setTimeout(() => {
-        let emptySpaces = mockBoard.map((val, i) => val === null ? i : null).filter(val => val !== null);
-        
-        if(emptySpaces.length > 0) {
+        let emptySpaces = mockBoard
+            .map((val, i) => val === null ? i : null)
+            .filter(val => val !== null);
+
+        if (emptySpaces.length > 0) {
             let randomPos = emptySpaces[Math.floor(Math.random() * emptySpaces.length)];
             mockBoard[randomPos] = "O";
-            
+
+            let result = checkWinner(mockBoard);
+
+            if (result) {
+                handleServerMessage({
+                    type: "game_end",
+                    data: {
+                        board: mockBoard,
+                        winner: result === "DRAW" ? null : (result === "O" ? "opponent_456" : myUid)
+                    }
+                });
+                return;
+            }
+
             handleServerMessage({
                 type: "game_update",
                 data: { board: mockBoard, turn: myUid }
