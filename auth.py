@@ -1,11 +1,14 @@
-from utils.facial_recognition_module import find_closest_match
+from utils.facial_recognition_module import find_closest_match, build_encodings_cache
 from db import get_images, user_exists
 import asyncio
 
+_db_images = get_images()
+encodings_cache = build_encodings_cache(_db_images)
+
 async def authenticate(login_image_data):
     loop = asyncio.get_event_loop()
-    db_images = await loop.run_in_executor(None, get_images)  # run sync in thread
-    matched_uid = find_closest_match(login_image_data, db_images)
+    
+    matched_uid = find_closest_match(login_image_data,encodings_cache)
 
     if matched_uid is None:
         return None
