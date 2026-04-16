@@ -21,7 +21,7 @@ class ConnectionManager:
      
              for p in players:
                  if p != uid:
-                    await xelf.game_manager.force_win(room_id, p)
+                    await self.game_manager.force_win(room_id, p)
      
              self.room_manager.remove_room(room_id)
 
@@ -50,12 +50,20 @@ class ConnectionManager:
         print(f"handle_message called: uid={uid} data={data}")
         import json
         msg = json.loads(data)
-    
+
         if msg["type"] == "find_match":
             await self.match_manager.find_match(uid)
-    
+
+        elif msg["type"] == "send_challenge":                        # NEW
+            await self.match_manager.send_challenge(uid, msg["target_uid"])
+
+        elif msg["type"] == "respond_challenge":                     # NEW
+            await self.match_manager.respond_challenge(
+                uid, msg["challenger_uid"], msg["accepted"]
+            )
+
         elif msg["type"] == "move":
             await self.game_manager.handle_move(uid, msg["room_id"], msg["position"])
-    
+
         elif msg["type"] == "chat":
             await self.match_manager.send_chat(uid, msg["room_id"], msg["message"])
