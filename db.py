@@ -14,7 +14,12 @@ def user_exists(uid):
 def set_user_online(uid):
     cursor.execute("UPDATE users SET is_online = TRUE WHERE uid = ?", (uid,))
     conn.commit()
-
+def set_user_offline(uid):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE users SET is_online = 0 WHERE uid = ?", (uid,))
+    conn.commit()
+    conn.close()
 #MONGODB
 MONGO_URI = "mongodb+srv://hairband:hairband_a_s_h@cluster0.4ldl2pp.mongodb.net/project_db_mongo?retryWrites=true&w=majority"
 client = MongoClient(MONGO_URI)

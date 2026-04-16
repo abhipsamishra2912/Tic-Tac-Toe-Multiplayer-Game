@@ -1,18 +1,26 @@
-from fastapi import FastAPI, Request
+from fastapi import WebSocket, WebSocketDisconnect, FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-import base64
-
+import json
+from managers.game_manager import GameManager
+from managers.elo_manager import update_ratings
+from managers.ws_manager import ConnectionManager
 from auth import authenticate
 from db import set_user_online
-from elo_manager import get_leaderboard
-
+from managers.match_manager import MatchManager
+from managers.room_manager import RoomManager
 app = FastAPI()
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 sessions = {}
-
+match_manager = MatchManager()
+room_manager = RoomManager()
+game_manager = GameManager(None, update_ratings, room_manager)
+manager = ConnectionManager(match_manager, room_manager, game_manager)
+game_manager.connection_manager = manager
+match_manager.room_manager = room_manager
+match_manager.game_manager = game_manager
 @app.get("/")
 def serve_login():
     return FileResponse("static/login.html")
@@ -28,7 +36,7 @@ async def login(request: Request):
     if "," in image_data:
         image_data = image_data.split(",", 1)[1]
 
-    uid = authenticate(image_data)
+    uid=await authenticate(image_data)
 
     if uid is None:
         return {"status": "fail", "message": "Face not recognised"}
@@ -42,6 +50,16 @@ async def login(request: Request):
         "message": "Login successful"
     }
 
-@app.get("/leaderboard")
-def leaderboard():
-    return get_leaderboard()
+
+
+from fastapi import WebSocket, WebSocketDisconnect
+
+@app.websocket("/ws/{uid}")
+async def websocket_endpoint(websocket: WebSocket, uid: str):
+    await manager.connect(uid, websocket)
+    try:
+        while True:
+            data = await websocket.receive_text()
+            await manager.handle_message(uid, data)
+    except WebSocketDisconnect:
+        await manager.disconnect(uid)
