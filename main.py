@@ -15,16 +15,19 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
     
 sessions = {}
+
 match_manager = MatchManager()
 room_manager = RoomManager()
+
 game_manager = GameManager(None, update_ratings, room_manager)
 manager = ConnectionManager(match_manager, room_manager, game_manager)
+
 game_manager.connection_manager = manager
 match_manager.room_manager = room_manager
 match_manager.game_manager = game_manager
 
 @app.on_event("startup")
-async def startup_event():
+async def startup():
     print("Building face encodings cache...")
     init_cache()
     print("Cache ready")
