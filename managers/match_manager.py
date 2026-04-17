@@ -38,25 +38,40 @@ class MatchManager:
             print(f"game started")
 
     async def send_challenge(self, challenger_uid, target_uid):
-        self.pending_challenges[challenger_uid] = target_uid
+        self.pending_challenges[(challenger_uid, target_uid)] = True
+
         await self.game_manager.connection_manager.send_to_user(target_uid, {
             "type": "challenge_received",
             "from": challenger_uid
         })
 
     async def respond_challenge(self, target_uid, challenger_uid, accepted: bool):
-        if self.pending_challenges.get(challenger_uid) != target_uid:
+        if not self.pending_challenges.get((challenger_uid, target_uid)):
             await self.game_manager.connection_manager.send_to_user(target_uid, {
                 "type": "error",
                 "message": "No pending challenge from this user"
             })
             return
 
-        del self.pending_challenges[challenger_uid]
+        del self.pending_challenges[(challenger_uid, target_uid)]
 
         if accepted:
             room_id = self.room_manager.create_room(challenger_uid, target_uid)
+
+            for uid in [challenger_uid, target_uid]:
+                await self.game_manager.connection_manager.send_to_user(uid, {
+                    "type": "challenge_accepted",
+                    "data": {
+                        "room_id": room_id,
+                        "players": [challenger_uid, target_uid]
+                    }
+                })
+
+            import asyncio
+            await asyncio.sleep(0.5)
+
             await self.game_manager.start_game(room_id, challenger_uid, target_uid)
+
         else:
             await self.game_manager.connection_manager.send_to_user(challenger_uid, {
                 "type": "challenge_declined",
