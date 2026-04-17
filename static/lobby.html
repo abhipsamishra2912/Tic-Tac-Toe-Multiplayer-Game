@@ -2,56 +2,44 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>TERMINAL_INTERFACE</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TERMINAL_LOBBY</title>
     <link rel="stylesheet" href="/static/lobby.css">
 </head>
 <body>
-    <button id="theme-toggle">🌙</button>
+    <button id="theme-toggle">[ THEME ]</button>
 
     <div id="lobby-screen" class="container">
         <div class="top-bar">
             <h1>LIVE_LOBBY</h1>
             <div id="status">Connecting...</div>
         </div>
-        
-        <div id="users">
-            </div>
 
-        <button id="findMatch" class="btn-block">INITIATE_RANDOM_MATCHMAKING</button>
+        <div style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+            <div class="section-label">// ONLINE_PLAYERS</div>
+            <div id="users"></div>
+
+            <button id="findMatch" class="btn-block">[ INITIATE_RANDOM_MATCHMAKING ]</button>
+            <a href="/static/leaderboard.html" style="text-align:center; color: var(--dark-green); font-family: var(--font-mono); font-size: 1rem; letter-spacing: 2px; text-decoration: none; transition: 0.2s;"
+               onmouseover="this.style.color='var(--main-green)'"
+               onmouseout="this.style.color='var(--dark-green)'">
+                [ VIEW_LEADERBOARD ]
+            </a>
+        </div>
     </div>
 
-    <div id="game-screen" class="container" style="display: none;">
-        <div class="top-bar">
-            <h1>ARENA_V1.0</h1>
-            <div id="game-status">WAITING_FOR_DATA...</div>
-        </div>
-
-        <div class="game-layout">
-            <div id="board" class="tic-tac-toe-grid">
-                <div class="cell" data-index="0"></div>
-                <div class="cell" data-index="1"></div>
-                <div class="cell" data-index="2"></div>
-                <div class="cell" data-index="3"></div>
-                <div class="cell" data-index="4"></div>
-                <div class="cell" data-index="5"></div>
-                <div class="cell" data-index="6"></div>
-                <div class="cell" data-index="7"></div>
-                <div class="cell" data-index="8"></div>
-            </div>
-
-            <div class="sidebar">
-                <div class="info-box">
-                    <p>USER: <span id="player-uid">---</span></p>
-                    <p>SYMBOL: <span id="player-symbol">---</span></p>
-                </div>
-                <div id="log-panel" class="terminal-log">
-                    <p>> Connection Established.</p>
-                </div>
+    <!-- Challenge incoming overlay -->
+    <div id="challenge-overlay">
+        <div class="challenge-box">
+            <p>INCOMING CHALLENGE FROM<br><span id="challenger-name">---</span></p>
+            <div class="challenge-actions">
+                <button id="btn-accept">[ ACCEPT ]</button>
+                <button id="btn-decline">[ DECLINE ]</button>
             </div>
         </div>
     </div>
 
-    <script src="lobby.js"></script>
-    <script src="theme.js"></script>
+    <script src="/static/lobby.js"></script>
+    <script src="/static/theme.js"></script>
 </body>
 </html>

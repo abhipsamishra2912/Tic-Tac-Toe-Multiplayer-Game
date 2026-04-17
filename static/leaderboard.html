@@ -1,38 +1,37 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Leaderboard</title>
-
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
-
-    <link rel="stylesheet" href="leaderboard.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LEADERBOARD</title>
+    <link rel="stylesheet" href="/static/leaderboard.css">
 </head>
-
 <body>
+    <button id="theme-toggle">[ THEME ]</button>
 
-<div class="container">
+    <div class="container">
+        <div class="top-bar">
+            <h1>GLOBAL_RANKINGS</h1>
+            <a href="/static/lobby.html" style="color: var(--dark-green); font-family: var(--font-mono); font-size: 0.95rem; text-decoration: none; letter-spacing: 1px;"
+               onmouseover="this.style.color='var(--main-green)'"
+               onmouseout="this.style.color='var(--dark-green)'">
+                [ BACK_TO_LOBBY ]
+            </a>
+        </div>
 
-    <div class="top-bar">
-        <h1>Leaderboard</h1>
-
-        <button id="theme-toggle">🌙</button>
+        <table>
+            <thead>
+                <tr>
+                    <th>RANK</th>
+                    <th>PLAYER</th>
+                    <th>ELO</th>
+                </tr>
+            </thead>
+            <tbody id="leaderboard-body"></tbody>
+        </table>
     </div>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Rank</th>
-                <th>Player</th>
-                <th>Elo Rating</th>
-            </tr>
-        </thead>
-
-        <tbody id="leaderboard-body"></tbody>
-    </table>
-</div>
-
-<script src="leaderboard.js"></script>
-<script src="theme.js"></script>
-
+    <script src="/static/leaderboard.js"></script>
+    <script src="/static/theme.js"></script>
 </body>
 </html>

@@ -1,142 +1,131 @@
 const uid = localStorage.getItem("uid");
-let ws = null;
-let currentRoomId = null;
-let mySymbol = null;
-let currentTurn = null;
 
-if (!uid) { window.location.href = "/"; } else { init(); }
+if (!uid) {
+    window.location.href = "/";
+} else {
+    initLobby();
+}
 
-function init() {
-    ws = new WebSocket(`ws://${window.location.host}/ws/${uid}`);
+function initLobby() {
+    const statusBox    = document.getElementById("status");
+    const userContainer = document.getElementById("users");
+    const findMatchBtn  = document.getElementById("findMatch");
+    const overlay       = document.getElementById("challenge-overlay");
+    const challengerName = document.getElementById("challenger-name");
+    const btnAccept     = document.getElementById("btn-accept");
+    const btnDecline    = document.getElementById("btn-decline");
+
+    let pendingChallenger = null;
+    let inQueue = false;
+
+    const ws = new WebSocket(`ws://${window.location.host}/ws/${uid}`);
+
+    ws.onopen = () => {
+        statusBox.innerText = "ONLINE";
+    };
+
+    ws.onclose = () => {
+        statusBox.innerText = "DISCONNECTED";
+    };
+
+    ws.onerror = () => {
+        statusBox.innerText = "CONNECTION_ERROR";
+    };
 
     ws.onmessage = (event) => {
         const msg = JSON.parse(event.data);
-        console.log("RECV:", msg);
 
-        switch(msg.type) {
-            case "lobby_update":
-                renderUsers(msg.online_users);
-                break;
-            case "challenge_received":
-                const accepted = confirm(`Incoming Challenge from: ${msg.from}\nDo you accept?`);
-    
+        if (msg.type === "lobby_update") {
+            renderUsers(msg.online_users);
+        }
+
+        if (msg.type === "challenge_received") {
+            pendingChallenger = msg.from;
+            challengerName.innerText = msg.from;
+            overlay.classList.add("visible");
+        }
+
+        if (msg.type === "challenge_declined") {
+            alert(`${msg.by} declined your challenge.`);
+        }
+
+        if (msg.type === "game_start") {
+            localStorage.setItem("room_id", msg.data.room_id);
+            window.location.href = `/static/game.html?room=${msg.data.room_id}`;
+        }
+
+        if (msg.type === "error") {
+            statusBox.innerText = msg.message;
+        }
+    };
+
+    // Accept challenge
+    btnAccept.onclick = () => {
+        if (!pendingChallenger) return;
+        ws.send(JSON.stringify({
+            type: "respond_challenge",
+            challenger_uid: pendingChallenger,
+            accepted: true
+        }));
+        overlay.classList.remove("visible");
+        pendingChallenger = null;
+    };
+
+    // Decline challenge
+    btnDecline.onclick = () => {
+        if (!pendingChallenger) return;
+        ws.send(JSON.stringify({
+            type: "respond_challenge",
+            challenger_uid: pendingChallenger,
+            accepted: false
+        }));
+        overlay.classList.remove("visible");
+        pendingChallenger = null;
+    };
+
+    // Random matchmaking
+    findMatchBtn.onclick = () => {
+        if (inQueue) return;
+        inQueue = true;
+        findMatchBtn.disabled = true;
+        findMatchBtn.innerText = "[ SEARCHING... ]";
+        ws.send(JSON.stringify({ type: "find_match" }));
+    };
+
+    function renderUsers(users) {
+        userContainer.innerHTML = "";
+
+        const others = users.filter(u => u !== uid);
+
+        if (others.length === 0) {
+            const empty = document.createElement("div");
+            empty.className = "empty-state";
+            empty.innerText = "// NO OTHER PLAYERS ONLINE";
+            userContainer.appendChild(empty);
+            return;
+        }
+
+        others.forEach(u => {
+            const div = document.createElement("div");
+            div.className = "user-card";
+
+            const nameSpan = document.createElement("span");
+            nameSpan.innerText = u;
+
+            const btn = document.createElement("button");
+            btn.innerText = "[ CHALLENGE ]";
+            btn.onclick = () => {
+                btn.disabled = true;
+                btn.innerText = "[ SENT... ]";
                 ws.send(JSON.stringify({
-                    type: "respond_challenge",
-                    challenger_uid: msg.from,
-                    accepted: accepted
+                    type: "send_challenge",
+                    target_uid: u
                 }));
-                break;
-            case "challenge_accepted":
-                console.log("CHALLENGE ACCEPTED:", msg.data);
+            };
 
-                currentRoomId = msg.data.room_id;
-
-                document.getElementById("status").innerText = "MATCH FOUND. PREPARING ARENA...";
-
-                break;
-            case "game_start":
-                console.log("GAME_START received:", msg.data);
-                setupGame(msg.data);
-                break;
-            case "game_update":
-                updateBoard(msg.data);
-                break;
-            case "game_end":
-                finishGame(msg.data);
-                break;
-            case "error":
-                alert("SYSTEM_ERROR: " + msg.message);
-                break;
-        }
-    };
-}
-
-function renderUsers(users) {
-    const container = document.getElementById("users");
-    container.innerHTML = users.filter(u => u !== uid).map(u => `
-        <div class="user-card">
-            <span>${u}</span>
-            <button onclick="challenge('${u}')">CHALLENGE</button>
-        </div>
-    `).join('');
-}
-
-function challenge(target) {
-    ws.send(JSON.stringify({type: "send_challenge", target_uid: target}));
-}
-
-// function setupGame(data) {
-//     currentRoomId = data.room_id;
-//     mySymbol = data.symbol;
-//     currentTurn = data.turn;
-
-//     document.getElementById("lobby-screen").style.display = "none";
-//     document.getElementById("game-screen").style.display = "block";
-//     document.getElementById("player-uid").innerText = uid;
-//     document.getElementById("player-symbol").innerText = mySymbol;
-    
-//     updateStatus();
-// }
-
-function updateBoard(data) {
-    currentTurn = data.turn;
-    const cells = document.querySelectorAll(".cell");
-    data.board.forEach((val, i) => {
-        cells[i].innerText = val || "";
-        if (val) cells[i].classList.add("disabled");
-    });
-    updateStatus();
-}
-
-function updateStatus() {
-    const status = document.getElementById("game-status");
-    if (currentTurn === uid) {
-        status.innerText = ">> YOUR TURN <<";
-        status.style.color = "var(--main-green)";
-    } else {
-        status.innerText = "WAITING FOR OPPONENT...";
-        status.style.color = "var(--dark-green)";
+            div.appendChild(nameSpan);
+            div.appendChild(btn);
+            userContainer.appendChild(div);
+        });
     }
-}
-
-document.querySelectorAll(".cell").forEach(cell => {
-    cell.onclick = (e) => {
-        const pos = e.target.dataset.index;
-        if (currentTurn === uid && !e.target.innerText) {
-            ws.send(JSON.stringify({
-                type: "move",
-                room_id: currentRoomId,
-                position: parseInt(pos)
-            }));
-        }
-    };
-});
-
-function finishGame(data) {
-    const winMsg = data.winner === uid ? "VICTORY" : (data.winner ? "DEFEATED" : "DRAW");
-    alert(`MATCH_TERMINATED: ${winMsg}`);
-    location.reload(); 
-}
-
-document.getElementById("findMatch").onclick = () => ws.send(JSON.stringify({type:"find_match"}));
-
-function setupGame(data) {
-    // 1. Store game details
-    currentRoomId = data.room_id;
-    mySymbol = data.symbol;
-    currentTurn = data.turn;
-
-    // 2. SWAP THE VIEWS (This is your "Redirect")
-    document.getElementById("lobby-screen").style.display = "none";
-    document.getElementById("game-screen").style.display = "block";
-
-    // 3. Update the UI labels
-    document.getElementById("player-uid").innerText = uid;
-    document.getElementById("player-symbol").innerText = mySymbol;
-    
-    // 4. Log it to your terminal-style log
-    const log = document.getElementById("log-panel");
-    log.innerHTML += `<p>> MATCH_STARTED: ROOM_${currentRoomId.slice(0,4)}</p>`;
-    
-    updateStatus();
 }

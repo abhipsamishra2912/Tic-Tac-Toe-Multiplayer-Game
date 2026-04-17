@@ -1,64 +1,48 @@
 @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
 
 :root {
-    --bg-color: #0c1410;       
-    --terminal-bg: #11201a;    
-    --main-green: #62a37c;     
-    --dark-green: #2a4a38;    
-    --alert-red: #b05c5c;      
+    --bg-color: #0c1410;
+    --terminal-bg: #11201a;
+    --main-green: #62a37c;
+    --dark-green: #2a4a38;
+    --alert-red: #b05c5c;
     --highlight-color: #ffffff;
-
     --font-mono: 'VT323', monospace;
-
     --border-terminal: 1px solid var(--main-green);
     --glow: 0 0 10px rgba(98, 163, 124, 0.5);
+    --transition: 0.1s steps(4);
 }
 
 body.dark {
     --bg-color: #f5f1e8;
-    --terminal-bg: #ffffff;    
-    --main-green: #410200;     
-    --dark-green: #c4a484;     
-    --alert-red: #b05c5c;      
-    --glow: none;
-    --font-mono: 'VT323', monospace;
+    --terminal-bg: #ffffff;
+    --main-green: #410200;
+    --dark-green: #c4a484;
+    --alert-red: #b05c5c;
+    --highlight-color: #000000;
 }
 
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
 body {
-    margin: 0;
+    min-height: 100vh;
     font-family: var(--font-mono);
     background-color: var(--bg-color);
     color: var(--main-green);
     display: flex;
+    align-items: center;
     justify-content: center;
-    align-items: center;
-    height: 100vh;
+    padding: 20px;
 }
 
-.container {
-    width: 520px;
-    background: var(--terminal-bg);
-    border: var(--border-terminal);
-    box-shadow: inset 0 0 20px rgba(0,0,0,0.8), var(--glow);
-    padding: 30px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
-    position: relative;
-}
-
-.container::before {
-    content: "[ LIVE_LOBBY_INTERFACE_v1.0 ]";
+body::after {
+    content: " ";
     display: block;
-    width: calc(100% + 60px);
-    margin: -30px -30px 10px;
-    padding: 10px;
-    background: var(--dark-green);
-    color: var(--main-green);
-    text-align: center;
-    letter-spacing: 2px;
-    border-bottom: var(--border-terminal);
+    position: fixed;
+    top: 0; left: 0; bottom: 0; right: 0;
+    z-index: 10;
+    background-size: 100% 4px, 3px 100%;
+    pointer-events: none;
 }
 
 #theme-toggle {
@@ -66,7 +50,6 @@ body {
     top: 20px;
     right: 20px;
     z-index: 1000;
-
     border: 1px solid var(--main-green);
     background: transparent;
     color: var(--main-green);
@@ -83,125 +66,243 @@ body {
     box-shadow: var(--glow);
 }
 
-h1 {
-    font-size: 2rem;
-    text-transform: uppercase;
+.container {
+    width: 700px;
+    background: var(--terminal-bg);
+    border: var(--border-terminal);
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.8), var(--glow);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+/* top bar header strip */
+.top-bar {
+    background: var(--dark-green);
+    border-bottom: var(--border-terminal);
+    padding: 8px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    letter-spacing: 2px;
+}
+
+.top-bar h1 {
+    font-size: 1.2rem;
+    color: var(--main-green);
     text-shadow: var(--glow);
-    margin: 0;
 }
 
 #status {
-    width: 100%;
-    padding: 8px;
-    border: 1px dashed var(--dark-green);
-    text-align: left;
+    font-size: 1rem;
     color: var(--main-green);
-    background: rgba(0,0,0,0.3);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#status::before {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: var(--main-green);
+    box-shadow: var(--glow);
+    animation: blink 1s steps(2) infinite;
+}
+
+@keyframes blink { to { visibility: hidden; } }
+
+/* lobby screen */
+#lobby-screen {
+    padding: 20px;
+    gap: 16px;
+    display: flex;
+    flex-direction: column;
+}
+
+#lobby-screen .top-bar {
+    margin: -20px -20px 0;
+    width: calc(100% + 40px);
+}
+
+.section-label {
+    font-size: 0.9rem;
+    color: var(--dark-green);
+    letter-spacing: 3px;
+    border-bottom: 1px dashed var(--dark-green);
+    padding-bottom: 4px;
+    margin-bottom: 8px;
 }
 
 #users {
-    width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    max-height: 300px;
+    gap: 8px;
+    min-height: 120px;
+    max-height: 280px;
     overflow-y: auto;
 }
+
+#users::-webkit-scrollbar { width: 4px; }
+#users::-webkit-scrollbar-track { background: var(--bg-color); }
+#users::-webkit-scrollbar-thumb { background: var(--dark-green); }
 
 .user-card {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px;
-    border: var(--border-terminal);
-    background: rgba(0,0,0,0.25);
-    box-shadow: inset 0 0 10px rgba(0,0,0,0.6);
+    border: 1px dashed var(--dark-green);
+    padding: 8px 14px;
+    background: rgba(0,0,0,0.2);
+    transition: border-color 0.2s;
+}
+
+.user-card:hover {
+    border-color: var(--main-green);
+    box-shadow: var(--glow);
 }
 
 .user-card span {
-    font-size: 1.3rem;
+    font-size: 1.1rem;
     letter-spacing: 1px;
 }
 
-button {
-    font-family: var(--font-mono);
-    text-transform: uppercase;
-    cursor: pointer;
-    border: var(--border-terminal);
-    background: transparent;
-    color: var(--main-green);
-    padding: 8px 14px;
-    transition: 0.2s;
+.user-card .status-badge {
+    font-size: 0.85rem;
+    color: var(--dark-green);
+    margin-left: 10px;
 }
 
-button:hover {
+.user-card button {
+    background: transparent;
+    border: 1px solid var(--main-green);
+    color: var(--main-green);
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    padding: 4px 16px;
+    cursor: pointer;
+    transition: 0.2s;
+    text-transform: uppercase;
+}
+
+.user-card button:hover {
     background: var(--main-green);
     color: var(--terminal-bg);
     box-shadow: var(--glow);
 }
 
-#findMatch {
-    margin-top: 10px;
-    width: 100%;
+.user-card button:disabled {
     border-color: var(--dark-green);
     color: var(--dark-green);
-}
-
-#findMatch:hover {
-    background: var(--dark-green);
-    color: var(--highlight-color);
-}
-
-/* ... Keep your existing CSS roots and body styles ... */
-
-.tic-tac-toe-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 100px);
-    grid-template-rows: repeat(3, 100px);
-    gap: 10px;
-    margin: 20px 0;
-}
-
-.cell {
-    width: 100px;
-    height: 100px;
-    border: 2px solid var(--main-green);
-    background: rgba(0,0,0,0.3);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 3rem;
-    cursor: pointer;
-    transition: 0.2s;
-}
-
-.cell:hover:not(.disabled) {
-    background: var(--dark-green);
-}
-
-.cell.disabled {
     cursor: not-allowed;
-    opacity: 0.8;
 }
 
-.game-layout {
-    display: flex;
-    gap: 40px;
-    justify-content: center;
-    align-items: flex-start;
-}
-
-.terminal-log {
-    width: 250px;
-    height: 200px;
-    border: 1px solid var(--dark-green);
-    background: rgba(0,0,0,0.5);
-    padding: 10px;
-    font-size: 0.9rem;
-    overflow-y: auto;
+.empty-state {
+    color: var(--dark-green);
+    font-size: 1rem;
+    text-align: center;
+    padding: 30px 0;
+    letter-spacing: 2px;
 }
 
 .btn-block {
     width: 100%;
-    margin-top: 20px;
+    background: transparent;
+    border: var(--border-terminal);
+    color: var(--main-green);
+    font-family: var(--font-mono);
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    padding: 12px;
+    cursor: pointer;
+    letter-spacing: 2px;
+    transition: 0.2s;
+}
+
+.btn-block:hover {
+    background: var(--main-green);
+    color: var(--terminal-bg);
+    box-shadow: var(--glow);
+}
+
+.btn-block:disabled {
+    border-color: var(--dark-green);
+    color: var(--dark-green);
+    cursor: not-allowed;
+}
+
+/* challenge overlay */
+#challenge-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+}
+
+#challenge-overlay.visible {
+    display: flex;
+}
+
+.challenge-box {
+    background: var(--terminal-bg);
+    border: var(--border-terminal);
+    box-shadow: var(--glow);
+    padding: 30px 40px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-width: 320px;
+}
+
+.challenge-box p {
+    font-size: 1.3rem;
+    color: var(--highlight-color);
+    letter-spacing: 1px;
+}
+
+.challenge-box p span {
+    color: var(--main-green);
+    text-shadow: var(--glow);
+}
+
+.challenge-actions {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+}
+
+.challenge-actions button {
+    background: transparent;
+    font-family: var(--font-mono);
+    font-size: 1.1rem;
+    padding: 8px 28px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: 0.2s;
+}
+
+#btn-accept {
+    border: 1px solid var(--main-green);
+    color: var(--main-green);
+}
+
+#btn-accept:hover {
+    background: var(--main-green);
+    color: var(--terminal-bg);
+    box-shadow: var(--glow);
+}
+
+#btn-decline {
+    border: 1px solid var(--alert-red);
+    color: var(--alert-red);
+}
+
+#btn-decline:hover {
+    background: var(--alert-red);
+    color: var(--terminal-bg);
 }

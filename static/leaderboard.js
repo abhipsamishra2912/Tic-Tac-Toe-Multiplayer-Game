@@ -1,25 +1,28 @@
 async function loadLeaderboard() {
+    const tbody = document.getElementById("leaderboard-body");
+
     try {
-        const res = await fetch ("/leaderboard");
+        const res  = await fetch("/leaderboard");
         const data = await res.json();
 
-        const players = data;
+        if (!data.length) {
+            tbody.innerHTML = `<tr class="empty-row"><td colspan="3">// NO DATA FOUND</td></tr>`;
+            return;
+        }
 
-        const tbody = document.getElementById("leaderboard-body");
         tbody.innerHTML = "";
-
-        players.forEach((player, index) => {
-            const row = `
-            <tr>
-                <td>${index + 1}</td>
-                <td>${player.name}</td>
+        data.forEach((player, i) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td class="rank-cell">${String(i + 1).padStart(2, "0")}</td>
+                <td>${player.name || player.uid}</td>
                 <td>${player.elo_rating}</td>
-            </tr>
             `;
-            tbody.innerHTML += row;
+            tbody.appendChild(tr);
         });
-    } catch(error) {
-        console.error("Error loading leaderboard:", error);
+
+    } catch (err) {
+        tbody.innerHTML = `<tr class="empty-row"><td colspan="3">// FAILED TO LOAD DATA</td></tr>`;
     }
 }
 
