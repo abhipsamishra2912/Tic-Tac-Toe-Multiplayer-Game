@@ -1,17 +1,15 @@
 from fastapi import WebSocket, WebSocketDisconnect, FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-import asyncio
-import json
 from auth import authenticate, init_cache
 from managers.game_manager import GameManager
 from managers.elo_manager import update_ratings
 from managers.ws_manager import ConnectionManager
-from auth import authenticate
 from db import set_user_online
 from managers.match_manager import MatchManager
 from managers.room_manager import RoomManager
 from utils.facial_recognition_module import build_encodings_cache
+
 app = FastAPI()
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -57,12 +55,8 @@ async def login(request: Request):
     return {
         "status": "success",
         "uid": uid,
-        "message": "Login successful"
+        "message": "/static/lobby.html"
     }
-
-
-
-from fastapi import WebSocket, WebSocketDisconnect
 
 @app.websocket("/ws/{uid}")
 async def websocket_endpoint(websocket: WebSocket, uid: str):
@@ -73,3 +67,8 @@ async def websocket_endpoint(websocket: WebSocket, uid: str):
             await manager.handle_message(uid, data)
     except WebSocketDisconnect:
         await manager.disconnect(uid)
+
+@app.get("/leaderboard")
+async def get_db_leaderboard():
+    from managers.elo_manager import get_leaderboard
+    return await get_leaderboard()
