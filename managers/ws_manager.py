@@ -64,6 +64,16 @@ class ConnectionManager:
                 uid, msg["challenger_uid"], msg["accepted"]
             )
 
+        elif msg["type"] == "forfeit":
+            room_id = self.room_manager.get_room(uid)
+            if room_id:
+                game = self.game_manager.games.get(room_id)
+                if game and game["status"] == "active":
+                    opponent = (
+                        game["player2"] if uid == game["player1"] else game["player1"]
+                    )
+                    await self.game_manager.force_win(room_id, opponent)
+                    
         elif msg["type"] == "move":
             await self.game_manager.handle_move(uid, msg["room_id"], msg["position"])
 

@@ -1,7 +1,7 @@
 import sqlite3
 import asyncio
 
-DB_PATH = "project_db.db"
+DB_PATH = "project_db"
 
 def get_connection():
     return sqlite3.connect(DB_PATH)
