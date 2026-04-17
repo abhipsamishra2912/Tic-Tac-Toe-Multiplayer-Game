@@ -26,6 +26,14 @@ function init() {
                     accepted: accepted
                 }));
                 break;
+            case "challenge_accepted":
+                console.log("CHALLENGE ACCEPTED:", msg.data);
+
+                currentRoomId = msg.data.room_id;
+
+                document.getElementById("status").innerText = "MATCH FOUND. PREPARING ARENA...";
+
+                break;
             case "game_start":
                 console.log("GAME_START received:", msg.data);
                 setupGame(msg.data);
@@ -57,18 +65,18 @@ function challenge(target) {
     ws.send(JSON.stringify({type: "send_challenge", target_uid: target}));
 }
 
-function setupGame(data) {
-    currentRoomId = data.room_id;
-    mySymbol = data.symbol;
-    currentTurn = data.turn;
+// function setupGame(data) {
+//     currentRoomId = data.room_id;
+//     mySymbol = data.symbol;
+//     currentTurn = data.turn;
 
-    document.getElementById("lobby-screen").style.display = "none";
-    document.getElementById("game-screen").style.display = "block";
-    document.getElementById("player-uid").innerText = uid;
-    document.getElementById("player-symbol").innerText = mySymbol;
+//     document.getElementById("lobby-screen").style.display = "none";
+//     document.getElementById("game-screen").style.display = "block";
+//     document.getElementById("player-uid").innerText = uid;
+//     document.getElementById("player-symbol").innerText = mySymbol;
     
-    updateStatus();
-}
+//     updateStatus();
+// }
 
 function updateBoard(data) {
     currentTurn = data.turn;
