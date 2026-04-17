@@ -2,11 +2,13 @@ from pymongo import MongoClient
 import sqlite3
 import csv
 import requests
+import os
 import base64
 from utils.facial_recognition_module import get_face_encoding
 
+DB_PATH = os.path.join(os.path.dirname(__file__), "../project_db")
+mydb=sqlite3.connect(DB_PATH)
 
-mydb=sqlite3.connect('project_db')
 mycursor=mydb.cursor()
 
 mycursor.execute('''
