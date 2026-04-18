@@ -3,32 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TERMINAL_LOBBY</title>
+    <title>ARENA</title>
     <link rel="stylesheet" href="/static/lobby.css">
+    <link rel="stylesheet" href="/static/game.css">
+    <style>
+        #game-screen { display: none; }
+    </style>
 </head>
 <body>
     <button id="theme-toggle">[ THEME ]</button>
 
-    <div id="lobby-screen" class="container">
-        <div class="top-bar">
-            <h1>LIVE_LOBBY</h1>
-            <div id="status">Connecting...</div>
-        </div>
-
-        <div style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">
-            <div class="section-label">// ONLINE_PLAYERS</div>
-            <div id="users"></div>
-
-            <button id="findMatch" class="btn-block">[ INITIATE_RANDOM_MATCHMAKING ]</button>
-            <a href="/static/leaderboard.html" style="text-align:center; color: var(--dark-green); font-family: var(--font-mono); font-size: 1rem; letter-spacing: 2px; text-decoration: none; transition: 0.2s;"
-               onmouseover="this.style.color='var(--main-green)'"
-               onmouseout="this.style.color='var(--dark-green)'">
-                [ VIEW_LEADERBOARD ]
-            </a>
+    <!-- ── LOBBY SCREEN ── -->
+    <div id="lobby-screen">
+        <div class="container">
+            <div class="top-bar">
+                <h1>LIVE_LOBBY</h1>
+                <div id="status">Connecting...</div>
+            </div>
+            <div style="padding:20px;display:flex;flex-direction:column;gap:16px;">
+                <div class="section-label">// ONLINE_PLAYERS</div>
+                <div id="users"></div>
+                <button id="findMatch" class="btn-block">[ INITIATE_RANDOM_MATCHMAKING ]</button>
+                <a href="/static/leaderboard.html"
+                   style="text-align:center;color:var(--dark-green);font-family:var(--font-mono);font-size:1rem;letter-spacing:2px;text-decoration:none;transition:0.2s;"
+                   onmouseover="this.style.color='var(--main-green)'"
+                   onmouseout="this.style.color='var(--dark-green)'">
+                    [ VIEW_LEADERBOARD ]
+                </a>
+            </div>
         </div>
     </div>
 
-    <!-- Challenge incoming overlay -->
+    <!-- ── CHALLENGE OVERLAY ── -->
     <div id="challenge-overlay">
         <div class="challenge-box">
             <p>INCOMING CHALLENGE FROM<br><span id="challenger-name">---</span></p>
@@ -39,7 +45,59 @@
         </div>
     </div>
 
-    <script src="/static/lobby.js"></script>
+    <!-- ── GAME SCREEN ── -->
+    <div id="game-screen">
+        <div class="game-container">
+            <div class="top-bar">
+                <h1>ARENA_V1.0</h1>
+                <div class="player-info">
+                    <span>UID: <span id="player-uid">---</span></span>
+                    <span>SYMBOL: <span id="player-symbol">---</span></span>
+                    <span>ELO: <span id="player-elo">---</span></span>
+                </div>
+            </div>
+            <div class="game-body">
+                <div class="board-side">
+                    <div id="game-status">WAITING...</div>
+                    <div class="board" id="board">
+                        <div class="cell" data-index="0"></div>
+                        <div class="cell" data-index="1"></div>
+                        <div class="cell" data-index="2"></div>
+                        <div class="cell" data-index="3"></div>
+                        <div class="cell" data-index="4"></div>
+                        <div class="cell" data-index="5"></div>
+                        <div class="cell" data-index="6"></div>
+                        <div class="cell" data-index="7"></div>
+                        <div class="cell" data-index="8"></div>
+                    </div>
+                    <div class="board-controls">
+                        <button id="btn-clear-log">[ CLEAR_LOG ]</button>
+                        <button class="btn-forfeit" id="btn-forfeit">[ FORFEIT ]</button>
+                    </div>
+                </div>
+                <div class="sidebar">
+                    <div class="info-box">
+                        <p>ROOM: <span id="room-id">---</span></p>
+                        <p>OPPONENT: <span id="opponent-uid">---</span></p>
+                    </div>
+                    <div class="terminal-log" id="log-panel">
+                        <p>> Initializing...</p>
+                    </div>
+                    <div class="chat-section">
+                        <div class="chat-label">// COMMS_CHANNEL</div>
+                        <div id="chat-messages"></div>
+                        <div class="chat-input-row">
+                            <input type="text" id="chat-input"
+                                   placeholder="> type message..." maxlength="120"/>
+                            <button id="btn-send-chat">SEND</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/arena.js"></script>
     <script src="/static/theme.js"></script>
 </body>
 </html>
