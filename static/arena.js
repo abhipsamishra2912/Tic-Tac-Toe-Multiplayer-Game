@@ -1,7 +1,7 @@
 const uid = localStorage.getItem("uid");
 if (!uid) { window.location.href = "/"; }
 
-// ── State ─────────────────────────────────────────────────────────────────────
+//State
 let mySymbol      = "";
 let currentTurn   = "";
 let currentRoom   = "";
@@ -9,7 +9,7 @@ let gameOver      = false;
 let inQueue       = false;
 let pendingChallenger = null;
 
-// ── DOM ───────────────────────────────────────────────────────────────────────
+//DOM 
 const lobbyScreen   = document.getElementById("lobby-screen");
 const gameScreen    = document.getElementById("game-screen");
 const statusBox     = document.getElementById("status");
@@ -35,7 +35,7 @@ const btnClearLog   = document.getElementById("btn-clear-log");
 
 playerUidEl.innerText = uid;
 
-// ── Single WebSocket — opened once, never replaced ────────────────────────────
+//Single WebSocket
 const ws = new WebSocket(`ws://${window.location.host}/ws/${uid}`);
 
 ws.onopen = () => {
@@ -99,7 +99,7 @@ ws.onmessage = (event) => {
     }
 };
 
-// ── Lobby logic ───────────────────────────────────────────────────────────────
+//Lobby logic 
 function renderUsers(users) {
     userContainer.innerHTML = "";
     const others = users.filter(u => u !== uid);
@@ -153,7 +153,7 @@ btnDecline.onclick = () => {
     pendingChallenger = null;
 };
 
-// ── Game logic ────────────────────────────────────────────────────────────────
+//Game logic
 function showGameScreen() {
     lobbyScreen.style.display = "none";
     gameScreen.style.display  = "block";
@@ -185,7 +185,6 @@ function handleGameStart(data) {
     gameLog(`> You are [ ${mySymbol} ]`);
     gameLog(`> Opponent: ${data.opponent}`);
 
-    // Restore board if server sent current state (reconnect case)
     if (data.board) {
         updateBoardUI(data.board);
     }
@@ -224,7 +223,6 @@ function handleGameEnd(data) {
     }, 2000);
 }
 
-// ── Board ─────────────────────────────────────────────────────────────────────
 cells.forEach(cell => {
     cell.addEventListener("click", () => {
         if (gameOver)                            return;
@@ -234,11 +232,9 @@ cells.forEach(cell => {
 
         const position = parseInt(cell.getAttribute("data-index"));
 
-        // Optimistic update — show symbol immediately
         cell.innerText = mySymbol;
         cell.classList.add("disabled");
         cell.classList.add(mySymbol === "X" ? "symbol-x" : "symbol-o");
-        // Block turn until server confirms
         currentTurn = "";
         updateStatus();
 
@@ -272,7 +268,6 @@ function updateStatus() {
         : "Waiting for opponent...";
 }
 
-// ── Chat ──────────────────────────────────────────────────────────────────────
 function sendChat() {
     const text = chatInput.value.trim();
     if (!text || !currentRoom) return;
@@ -290,7 +285,6 @@ function addChatMessage(from, message, isMe) {
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// ── Forfeit ───────────────────────────────────────────────────────────────────
 btnForfeit.onclick = () => {
     if (gameOver) return;
     if (!confirm("Forfeit this match?")) return;
@@ -300,7 +294,6 @@ btnForfeit.onclick = () => {
 
 btnClearLog.onclick = () => { logPanel.innerHTML = ""; };
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
 function send(obj) {
     if (ws.readyState !== WebSocket.OPEN) {
         console.error("[arena] WS not open, cannot send:", obj);
