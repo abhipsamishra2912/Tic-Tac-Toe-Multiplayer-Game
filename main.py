@@ -12,7 +12,7 @@ from db import set_user_online
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-sessions = {}
+sessions      = {}
 match_manager = MatchManager()
 room_manager  = RoomManager()
 game_manager  = GameManager(None, update_ratings, room_manager)
@@ -35,17 +35,13 @@ def serve_login():
 def serve_lobby():
     return FileResponse("static/lobby.html")
 
-@app.get("/static/game.html")
-def serve_game():
-    return FileResponse("static/game.html")
-
 @app.get("/static/leaderboard.html")
 def serve_leaderboard_page():
     return FileResponse("static/leaderboard.html")
 
 @app.post("/login")
 async def login(request: Request):
-    data = await request.json()
+    data       = await request.json()
     image_data = data.get("image")
 
     if not image_data:
@@ -55,13 +51,11 @@ async def login(request: Request):
         image_data = image_data.split(",", 1)[1]
 
     uid = await authenticate(image_data)
-
     if uid is None:
         return {"status": "fail", "message": "Face not recognised"}
 
     sessions[uid] = True
     set_user_online(uid)
-
     return {"status": "success", "uid": uid}
 
 @app.get("/leaderboard")
@@ -77,4 +71,7 @@ async def websocket_endpoint(websocket: WebSocket, uid: str):
             data = await websocket.receive_text()
             await manager.handle_message(uid, data)
     except WebSocketDisconnect:
+        await manager.disconnect(uid)
+    except Exception as e:
+        print(f"[WS] error for {uid}: {e}")
         await manager.disconnect(uid)
