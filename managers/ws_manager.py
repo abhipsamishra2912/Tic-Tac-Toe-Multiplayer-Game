@@ -10,39 +10,31 @@ class ConnectionManager:
 
     async def connect(self, uid, websocket):
         await websocket.accept()
-
-        # If already connected (reconnecting from game page),
-        # close the old socket cleanly before replacing it
-        old_ws = self.webdict.get(uid)
-        if old_ws and old_ws is not websocket:
-            try:
-                await old_ws.close()
-            except Exception:
-                pass
-
         self.webdict[uid] = websocket
         print(f"[WS] {uid} connected. Online: {list(self.webdict.keys())}")
 
-        # If this player is in an active game, resend game_start so
-        # the new game page socket gets the board state immediately
         room_id = self.room_manager.get_room(uid)
         if room_id:
             game = self.game_manager.games.get(room_id)
             if game and game["status"] == "active":
                 opponent = (
-                    game["player2"] if uid == game["player1"] else game["player1"]
+                    game["player2"] if uid == game["player1"]
+                    else game["player1"]
                 )
-                await websocket.send_json({
-                    "type": "game_start",
-                    "data": {
-                        "room_id": room_id,
-                        "symbol": game["symbol"][uid],
-                        "turn": game["turn"],
-                        "opponent": opponent,
-                        "board": game["board"],
-                    }
-                })
-                print(f"[WS] resent game_start to {uid} on reconnect")
+                try:
+                    await websocket.send_json({
+                        "type": "game_start",
+                        "data": {
+                            "room_id":  game["room_id"],
+                            "symbol":   game["symbol"][uid],
+                            "turn":     game["turn"],
+                            "opponent": opponent,
+                            "board":    game["board"],
+                        }
+                    })
+                    print(f"[WS] resent game state to {uid}")
+                except Exception as e:
+                    print(f"[WS] failed to resend state to {uid}: {e}")
 
         await self.broadcast_lobby_update()
 
@@ -56,7 +48,8 @@ class ConnectionManager:
             game = self.game_manager.games.get(room_id)
             if game and game["status"] == "active":
                 opponent = (
-                    game["player2"] if uid == game["player1"] else game["player1"]
+                    game["player2"] if uid == game["player1"]
+                    else game["player1"]
                 )
                 await self.game_manager.force_win(room_id, opponent)
             else:
@@ -68,13 +61,13 @@ class ConnectionManager:
     async def send_to_user(self, uid, message):
         ws = self.webdict.get(uid)
         if not ws:
-            print(f"[WS] send_to_user: {uid} not in webdict, skipping")
+            print(f"[WS] {uid} not in webdict")
             return
         try:
             await ws.send_json(message)
-            print(f"[WS] sent {message.get('type')} to {uid}")
+            print(f"[WS] sent '{message.get('type')}' to {uid}")
         except Exception as e:
-            print(f"[WS] send_to_user error for {uid}: {e}")
+            print(f"[WS] error sending to {uid}: {e}")
             self.webdict.pop(uid, None)
 
     async def broadcast(self, message):
@@ -133,4 +126,4 @@ class ConnectionManager:
                     await self.game_manager.force_win(room_id, opponent)
 
         else:
-            print(f"[WS] unknown message type: {t}")
+            print(f"[WS] unknown type: {t}")
