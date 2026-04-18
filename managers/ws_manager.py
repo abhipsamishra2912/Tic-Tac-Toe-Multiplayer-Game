@@ -1,4 +1,6 @@
+import json
 from db import set_user_offline
+
 class ConnectionManager:
     def __init__(self, match_manager, room_manager, game_manager):
         self.webdict = {}
@@ -8,89 +10,127 @@ class ConnectionManager:
 
     async def connect(self, uid, websocket):
         await websocket.accept()
+
+        # If already connected (reconnecting from game page),
+        # close the old socket cleanly before replacing it
+        old_ws = self.webdict.get(uid)
+        if old_ws and old_ws is not websocket:
+            try:
+                await old_ws.close()
+            except Exception:
+                pass
+
         self.webdict[uid] = websocket
+        print(f"[WS] {uid} connected. Online: {list(self.webdict.keys())}")
+
+        # If this player is in an active game, resend game_start so
+        # the new game page socket gets the board state immediately
+        room_id = self.room_manager.get_room(uid)
+        if room_id:
+            game = self.game_manager.games.get(room_id)
+            if game and game["status"] == "active":
+                opponent = (
+                    game["player2"] if uid == game["player1"] else game["player1"]
+                )
+                await websocket.send_json({
+                    "type": "game_start",
+                    "data": {
+                        "room_id": room_id,
+                        "symbol": game["symbol"][uid],
+                        "turn": game["turn"],
+                        "opponent": opponent,
+                        "board": game["board"],
+                    }
+                })
+                print(f"[WS] resent game_start to {uid} on reconnect")
+
         await self.broadcast_lobby_update()
 
     async def disconnect(self, uid):
-         if uid in self.webdict:
-             del self.webdict[uid]
-         set_user_offline(uid)      
-         room_id = self.room_manager.get_room(uid)
-     
-         if room_id:
-             players = self.room_manager.get_players(room_id)
-     
-             for p in players:
-                 if p != uid:
-                    await self.game_manager.force_win(room_id, p)
-     
-             self.room_manager.remove_room(room_id)
-         await self.broadcast_lobby_update()
+        self.webdict.pop(uid, None)
+        self.match_manager.remove_player(uid)
+        set_user_offline(uid)
+
+        room_id = self.room_manager.get_room(uid)
+        if room_id:
+            game = self.game_manager.games.get(room_id)
+            if game and game["status"] == "active":
+                opponent = (
+                    game["player2"] if uid == game["player1"] else game["player1"]
+                )
+                await self.game_manager.force_win(room_id, opponent)
+            else:
+                self.room_manager.remove_room(room_id)
+
+        await self.broadcast_lobby_update()
+        print(f"[WS] {uid} disconnected.")
 
     async def send_to_user(self, uid, message):
-        if uid not in self.webdict:
+        ws = self.webdict.get(uid)
+        if not ws:
+            print(f"[WS] send_to_user: {uid} not in webdict, skipping")
             return
-
-        websocket = self.webdict[uid]
-
         try:
-            await websocket.send_json(message)
-        except:
-            del self.webdict[uid]
+            await ws.send_json(message)
+            print(f"[WS] sent {message.get('type')} to {uid}")
+        except Exception as e:
+            print(f"[WS] send_to_user error for {uid}: {e}")
+            self.webdict.pop(uid, None)
 
     async def broadcast(self, message):
         for uid in list(self.webdict.keys()):
-            try:
-                await self.send_to_user(uid, message)
-            except:
-                pass
+            await self.send_to_user(uid, message)
+
+    async def broadcast_lobby_update(self):
+        await self.broadcast({
+            "type": "lobby_update",
+            "online_users": list(self.webdict.keys())
+        })
 
     def get_online_users(self):
         return list(self.webdict.keys())
 
     async def handle_message(self, uid, data):
-        print(f"handle_message called: uid={uid} data={data}")
-        import json
-        msg = json.loads(data)
+        try:
+            msg = json.loads(data)
+        except Exception:
+            print(f"[WS] bad JSON from {uid}: {data}")
+            return
 
-        if msg["type"] == "find_match":
+        t = msg.get("type")
+        print(f"[WS] {uid} → {t}")
+
+        if t == "find_match":
             await self.match_manager.find_match(uid)
 
-        elif msg["type"] == "send_challenge":                      
+        elif t == "send_challenge":
             await self.match_manager.send_challenge(uid, msg["target_uid"])
 
-        elif msg["type"] == "respond_challenge":                    
+        elif t == "respond_challenge":
             await self.match_manager.respond_challenge(
                 uid, msg["challenger_uid"], msg["accepted"]
             )
 
-        elif msg["type"] == "forfeit":
+        elif t == "move":
+            await self.game_manager.handle_move(
+                uid, msg["room_id"], msg["position"]
+            )
+
+        elif t == "chat":
+            await self.match_manager.send_chat(
+                uid, msg["room_id"], msg["message"]
+            )
+
+        elif t == "forfeit":
             room_id = self.room_manager.get_room(uid)
             if room_id:
                 game = self.game_manager.games.get(room_id)
                 if game and game["status"] == "active":
                     opponent = (
-                        game["player2"] if uid == game["player1"] else game["player1"]
+                        game["player2"] if uid == game["player1"]
+                        else game["player1"]
                     )
                     await self.game_manager.force_win(room_id, opponent)
-                    
-        elif msg["type"] == "move":
-            await self.game_manager.handle_move(uid, msg["room_id"], msg["position"])
 
-        elif msg["type"] == "chat":
-            await self.match_manager.send_chat(uid, msg["room_id"], msg["message"])
-
-
-    # async def broadcast(self, message):
-    #         for uid in list(self.webdict.keys()):
-    #             try:
-    #                 await self.send_to_user(uid, message)
-    #             except:
-    #                 pass
-
-    async def broadcast_lobby_update(self):
-        online_users = self.get_online_users()
-        await self.broadcast({
-            "type": "lobby_update",
-            "online_users": online_users
-        })
+        else:
+            print(f"[WS] unknown message type: {t}")

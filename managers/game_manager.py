@@ -6,68 +6,63 @@ class GameManager:
         self.games = {}
 
     async def start_game(self, room_id, player1, player2):
+        print(f"[GM] start_game: room={room_id} p1={player1} p2={player2}")
         game = {
             "room_id": room_id,
             "player1": player1,
             "player2": player2,
-            "board": [None for _ in range(9)],
+            "board": [None] * 9,
             "turn": player1,
-            "symbol": {
-                player1: "X",
-                player2: "O",
-            },
+            "symbol": {player1: "X", player2: "O"},
             "status": "active",
         }
-
         self.games[room_id] = game
         await self.send_game_start(game)
 
     async def handle_move(self, uid, room_id, position):
-        if room_id not in self.games:
-            return
         game = self.games.get(room_id)
-
-        if not game or game["status"] != "active":
+        if not game:
+            print(f"[GM] handle_move: room {room_id} not found. Active rooms: {list(self.games.keys())}")
             return
-
+        if game["status"] != "active":
+            print(f"[GM] handle_move: game not active")
+            return
         if uid not in [game["player1"], game["player2"]]:
+            print(f"[GM] handle_move: {uid} not in game")
             return
-
         if uid != game["turn"]:
             await self.connection_manager.send_to_user(uid, {
-                "type": "error",
-                "message": "not_your_turn"
+                "type": "error", "message": "not_your_turn"
             })
             return
-
         if position not in range(9):
             return
-
         if game["board"][position] is not None:
             await self.connection_manager.send_to_user(uid, {
-                "type": "error",
-                "message": "cell_taken"
+                "type": "error", "message": "cell_taken"
             })
             return
 
         game["board"][position] = game["symbol"][uid]
+        print(f"[GM] move by {uid} at {position} → board: {game['board']}")
 
         winner_symbol = self.check_win(game["board"])
-
         if winner_symbol:
             symbol_to_uid = {v: k for k, v in game["symbol"].items()}
-            winner_uid = symbol_to_uid.get(winner_symbol)
+            winner_uid = symbol_to_uid[winner_symbol]
+            print(f"[GM] winner found: {winner_uid}")
             await self.end_game(room_id, winner_uid)
             return
 
         if self.check_draw(game["board"]):
+            print(f"[GM] draw!")
             await self.end_game(room_id, None)
             return
 
         game["turn"] = (
             game["player2"] if uid == game["player1"] else game["player1"]
         )
-
+        print(f"[GM] next turn: {game['turn']}")
         await self.send_game_update(game)
 
     def check_win(self, board):
@@ -76,11 +71,9 @@ class GameManager:
             (0,3,6),(1,4,7),(2,5,8),
             (0,4,8),(2,4,6)
         ]
-
         for a, b, c in patterns:
             if board[a] and board[a] == board[b] == board[c]:
                 return board[a]
-
         return None
 
     def check_draw(self, board):
@@ -88,72 +81,74 @@ class GameManager:
 
     async def end_game(self, room_id, winner_uid):
         game = self.games.get(room_id)
-
         if not game:
             return
-
         game["status"] = "finished"
-
+        print(f"[GM] end_game: room={room_id} winner={winner_uid}")
         await self.send_game_end(game, winner_uid)
-
-        await self.elo_manager(
-            game["player1"],
-            game["player2"],
-            winner_uid
-        )
-
+        try:
+            await self.elo_manager(game["player1"], game["player2"], winner_uid)
+        except Exception as e:
+            print(f"[GM] elo update failed: {e}")
         self.games.pop(room_id, None)
         self.room_manager.remove_room(room_id)
 
+    async def force_win(self, room_id, winner_uid):
+        await self.end_game(room_id, winner_uid)
+
     async def handle_disconnect(self, uid):
         room_id = self.room_manager.get_room(uid)
-
         if not room_id:
             return
-
         game = self.games.get(room_id)
-
         if not game or game["status"] != "active":
             return
-
         opponent = (
             game["player2"] if uid == game["player1"] else game["player1"]
         )
-
         await self.end_game(room_id, opponent)
 
     async def send_game_start(self, game):
         for uid in [game["player1"], game["player2"]]:
-            await self.connection_manager.send_to_user(uid, {
+            opponent = (
+                game["player2"] if uid == game["player1"] else game["player1"]
+            )
+            msg = {
                 "type": "game_start",
                 "data": {
                     "room_id": game["room_id"],
-                    "symbol": game["symbol"][uid],
-                    "turn": game["turn"],
-                },
-            })
+                    "symbol":  game["symbol"][uid],
+                    "turn":    game["turn"],
+                    "opponent": opponent,
+                    "board":   game["board"],
+                }
+            }
+            print(f"[GM] sending game_start to {uid}")
+            await self.connection_manager.send_to_user(uid, msg)
 
     async def send_game_update(self, game):
         for uid in [game["player1"], game["player2"]]:
-            await self.connection_manager.send_to_user(uid, {
+            msg = {
                 "type": "game_update",
                 "data": {
                     "room_id": game["room_id"],
-                    "board": game["board"],
-                    "turn": game["turn"],
-                    "symbol": game["symbol"][uid],
-                },
-            })
+                    "board":   game["board"],
+                    "turn":    game["turn"],
+                    "symbol":  game["symbol"][uid],
+                }
+            }
+            print(f"[GM] sending game_update to {uid}")
+            await self.connection_manager.send_to_user(uid, msg)
 
     async def send_game_end(self, game, winner_uid):
         for uid in [game["player1"], game["player2"]]:
-            await self.connection_manager.send_to_user(uid, {
+            msg = {
                 "type": "game_end",
                 "data": {
                     "room_id": game["room_id"],
-                    "winner": winner_uid,
-                    "board": game["board"],
-                },
-            })
-    async def force_win(self, room_id, winner_uid):
-        await self.end_game(room_id, winner_uid)
+                    "winner":  winner_uid,
+                    "board":   game["board"],
+                }
+            }
+            print(f"[GM] sending game_end to {uid}")
+            await self.connection_manager.send_to_user(uid, msg)
