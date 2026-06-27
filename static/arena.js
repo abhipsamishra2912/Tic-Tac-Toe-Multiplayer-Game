@@ -216,9 +216,11 @@ function handleGameEnd(data) {
         gameLog("> You were defeated.");
     }
 
-setTimeout(() => {
-    showLobbyScreen();
-}, 3000);
+    setTimeout(() => {
+        if (confirm("Return to lobby?")) {
+            showLobbyScreen();
+        }
+    }, 2000);
 }
 
 cells.forEach(cell => {
